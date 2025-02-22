@@ -60,7 +60,7 @@ const NewSocietePage = ({
     setPending(true)
     setErrorMessage(undefined)
     setData(values)
-    
+
     setPending(false)
   }
   const form = useForm<z.infer<typeof contribuableConfCreationSchema>>({
