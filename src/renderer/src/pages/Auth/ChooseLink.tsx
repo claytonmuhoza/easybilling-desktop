@@ -5,7 +5,7 @@
 import { Alert, Button, DarkThemeToggle, Label, Select } from 'flowbite-react'
 import { useState } from 'react'
 import { reponseSimpleType } from '@renderer/types'
-import { LienAPI } from '@renderer/services/LienApi'
+import { LienAPIService } from '@renderer/services/LienApiService'
 export default function ChooseLink({
   setCount
 }: {
@@ -21,9 +21,9 @@ export default function ChooseLink({
     const lienApi = formData.get('lien-api') as string
 
     if (lienApi) {
-      LienAPI.insert(lienApi)
+      LienAPIService.insert(lienApi)
         .then(() => {
-          LienAPI.count().then((count) => setCount(count))
+          LienAPIService.count().then((count) => setCount(count))
         })
         .catch(() => {
           setError({
