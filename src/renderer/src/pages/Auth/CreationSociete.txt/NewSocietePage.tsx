@@ -19,6 +19,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { HiLocationMarker, HiLockClosed, HiOfficeBuilding, HiPhone } from 'react-icons/hi'
 import { z } from 'zod'
 import { Taxe } from '@renderer/services/Taxe'
+import { taxeService } from '@renderer/services/TaxeService'
 const NewSocietePage = ({
   identifiant_sys,
   password_sys,
@@ -46,7 +47,8 @@ const NewSocietePage = ({
   const [, setData] = useState<z.infer<typeof contribuableConfCreationSchema> | undefined>()
   useEffect(() => {
     setLoadingPage(true)
-    Taxe.getAllTaxes()
+    taxeService
+      .getAllTaxes()
       .then((data) => {
         setTaxes(data)
       })
@@ -108,8 +110,8 @@ const NewSocietePage = ({
         taxes: taxes.map((taxe) => ({
           nom: taxe.nom,
           assujetti: false,
-          valeur_defaut: taxe.valeurNonPourcentage ? taxe.valeurNonPourcentage : 0,
-          est_pourcentage: taxe.isPourcentage ? true : false,
+          valeur_defaut: taxe.valeur_non_pourcentage ? taxe.valeur_non_pourcentage : 0,
+          est_pourcentage: taxe.is_pourcentage ? true : false,
           values: taxe.valeurs,
           valeur_custom: false
         })),
