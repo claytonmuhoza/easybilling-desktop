@@ -60,19 +60,7 @@ const NewSocietePage = ({
     setPending(true)
     setErrorMessage(undefined)
     setData(values)
-    //  entrepriseService.insertEntreprise(values as Entreprise)
-    //    .then((data) => {
-    //      if (data) {
-    //        alert('Entreprise enregistrée avec succès')
-    //      } else {
-    //        setErrorMessage(
-    //          "Erreur lors de l'enregistrement de l'entreprise: une entriprise portant le meme NIF est peut être enregistrer"
-    //        )
-    //      }
-    //    })
-    //    .finally(() => {
-    //      setPending(false)
-    //    })
+    
     setPending(false)
   }
   const form = useForm<z.infer<typeof contribuableConfCreationSchema>>({

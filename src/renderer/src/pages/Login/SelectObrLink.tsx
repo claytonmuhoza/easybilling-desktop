@@ -1,7 +1,7 @@
 import { Alert, Button, DarkThemeToggle, Label, Select } from 'flowbite-react'
 import { useState } from 'react'
 import { reponseSimpleType } from '@renderer/types'
-import { LienAPI } from '@renderer/services/LienApi'
+import { LienAPIService } from '@renderer/services/LienApiService'
 
 export default function SelectObrLink({
   setCount
@@ -26,8 +26,8 @@ export default function SelectObrLink({
     }
 
     try {
-      await LienAPI.insert(lienApi)
-      const count = await LienAPI.count()
+      await LienAPIService.insert(lienApi)
+      const count = await LienAPIService.count()
       setCount(count)
     } catch {
       setError({
