@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Flowbite } from 'flowbite-react'
 import './App.css'
 import { flowbiteTheme } from './theme'
-import { LienAPI } from './services/LienApi'
 import ChooseLink from './pages/Auth/ChooseLink'
 import AuthLoading from './pages/Auth/AuthLoading'
 import CreateContribuable from './pages/Auth/CreateContribuable'
+import { LienAPIService } from './services/LienApiService'
 
 function App(): JSX.Element {
   const [isAuth, setIsAuth] = useState(false)
@@ -15,7 +15,7 @@ function App(): JSX.Element {
   useEffect(() => {
     const fetchLienApiCount = async (): Promise<void> => {
       try {
-        const count = await LienAPI.count()
+        const count = await LienAPIService.count()
         setLienAPICount(count)
       } catch (error) {
         console.error('Erreur lors de la récupération du lien API:', error)
