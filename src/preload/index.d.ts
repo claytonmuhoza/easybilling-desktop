@@ -13,7 +13,8 @@ declare global {
       entrepriseGetByNIF: (
         nif: string
       ) => Promise<import('../services/Entreprise').Entreprise | null>
-
+      entrepriseGetFirst: () => Promise<import('../services/Entreprise').Entreprise | null>
+      entrepriseCount: () => Promise<number>
       factureInsert: (
         factureData: import('../services/Facture').FactureData
       ) => Promise<number | null>
@@ -46,6 +47,7 @@ declare global {
       lienApiCount: () => Promise<number>
       lienApiInsert: (lien: string) => Promise<boolean>
       lienApiGet: () => Promise<string>
+
     }
   }
 }

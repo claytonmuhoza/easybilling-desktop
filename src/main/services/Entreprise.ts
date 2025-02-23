@@ -113,6 +113,16 @@ export class Entreprise {
       .map((row) => new Entreprise(row as Entreprise))
   }
 
+  static countEntreprises(): number {
+    const db = connectionToDatabase()
+    return db.prepare('SELECT COUNT(*) FROM entreprise').pluck().get() as number
+  }
+  static getFirstEntreprise(): Entreprise | null {
+    const db = connectionToDatabase()
+    const row = db.prepare('SELECT * FROM entreprise LIMIT 1').get()
+    return row ? new Entreprise(row as Entreprise) : null
+  }
+
   static deleteEntreprise(nif: string): boolean {
     try {
       const db = connectionToDatabase()

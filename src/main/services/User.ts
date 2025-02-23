@@ -97,6 +97,15 @@ export class User {
       return false
     }
   }
+  static count(): number {
+    try {
+      const db = connectionToDatabase()
+      return db.prepare('SELECT COUNT(*) FROM utilisateur').pluck().get()
+    } catch (error) {
+      console.error('Erreur lors du comptage des utilisateurs:', error)
+      return 0
+    }
+  }
 
   static authenticate(username: string, password: string): User | null {
     try {

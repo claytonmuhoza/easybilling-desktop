@@ -32,7 +32,22 @@ export const entrepriseService = {
       return { success: false, msg: 'Erreur lors de la récupération du token' }
     }
   },
-
+  getFirstEntreprise: async (): Promise<Entreprise | null> => {
+    try {
+      return await window.api.entrepriseGetFirst()
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la première entreprise", error)
+      return null
+    }
+  },
+  countEntreprises: async (): Promise<number> => {
+    try {
+      return await window.api.entrepriseCount()
+    } catch (error) {
+      console.error("Erreur lors du comptage des entreprises", error)
+      return 0
+    }
+  },
   /**
    * Récupère les informations d'une entreprise à partir de son NIF
    * @param nif Le NIF de l'entreprise
@@ -52,7 +67,7 @@ export const entrepriseService = {
   ): Promise<apiLoginResponseType> => {
     return await window.api.entrepriseIsContribuable(id_systeme, password_systeme)
   },
-  contribuableFormToEntrepriseData: (form: ContribuableForm): EntrepriseData =>{
+  contribuableFormToEntrepriseData: (form: ContribuableForm): EntrepriseData => {
     return {
       nom: form.nom,
       nif: form.nif,

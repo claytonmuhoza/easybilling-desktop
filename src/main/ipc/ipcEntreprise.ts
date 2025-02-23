@@ -19,3 +19,9 @@ ipcMain.handle(
 ipcMain.handle('Entreprise:getByNIF', async (_event, nif: string) => {
   return Entreprise.getEntrepriseByNIF(nif)
 })
+ipcMain.handle('Entreprise:count', async () => {
+  return Entreprise.countEntreprises()
+})
+ipcMain.handle('Entreprise:getFirst', async () => {
+  return Entreprise.getFirstEntreprise()
+})

@@ -13,6 +13,8 @@ interface IpcAPI {
     password_systeme: string
   ) => Promise<apiLoginResponseType>
   entrepriseGetByNIF: (nif: string) => Promise<Entreprise | null>
+  entrepriseGetFirst: () => Promise<Entreprise | null>
+  entrepriseCount: () => Promise<number>
 
   factureInsert: (factureData: FactureData) => Promise<number | null>
   factureCalculateTotals: (items: FactureItemData[]) => Promise<{
@@ -48,6 +50,8 @@ const api: IpcAPI = {
   entrepriseIsContribuable: (id_systeme, password_systeme) =>
     ipcRenderer.invoke('Entreprise:isContribuable', id_systeme, password_systeme),
   entrepriseGetByNIF: (nif) => ipcRenderer.invoke('Entreprise:getByNIF', nif),
+  entrepriseGetFirst: () => ipcRenderer.invoke('Entreprise:getFirst'),
+  entrepriseCount: () => ipcRenderer.invoke('Entreprise:count'),
 
   factureInsert: (factureData) => ipcRenderer.invoke('Facturation:insert', factureData),
   factureCalculateTotals: (items) => ipcRenderer.invoke('Facturation:calculateTotals', items),
