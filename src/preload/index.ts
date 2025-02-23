@@ -15,6 +15,7 @@ interface IpcAPI {
   entrepriseGetByNIF: (nif: string) => Promise<Entreprise | null>
   entrepriseGetFirst: () => Promise<Entreprise | null>
   entrepriseCount: () => Promise<number>
+  entrepriseGetAll: () => Promise<Entreprise[]>
 
   factureInsert: (factureData: FactureData) => Promise<number | null>
   factureCalculateTotals: (items: FactureItemData[]) => Promise<{
@@ -40,6 +41,7 @@ interface IpcAPI {
   userUpdate: (userData: User) => Promise<boolean>
   userDelete: (username: string) => Promise<boolean>
   userAuthenticate: (username: string, password: string) => Promise<User | null>
+  userCount: () => Promise<number>
   lienApiCount: () => Promise<number>
   lienApiInsert: (lien: string) => Promise<boolean>
   lienApiGet: () => Promise<string>
@@ -52,7 +54,7 @@ const api: IpcAPI = {
   entrepriseGetByNIF: (nif) => ipcRenderer.invoke('Entreprise:getByNIF', nif),
   entrepriseGetFirst: () => ipcRenderer.invoke('Entreprise:getFirst'),
   entrepriseCount: () => ipcRenderer.invoke('Entreprise:count'),
-
+  entrepriseGetAll: () => ipcRenderer.invoke('Entreprise:getAll'),
   factureInsert: (factureData) => ipcRenderer.invoke('Facturation:insert', factureData),
   factureCalculateTotals: (items) => ipcRenderer.invoke('Facturation:calculateTotals', items),
 
@@ -73,6 +75,7 @@ const api: IpcAPI = {
   userDelete: (username) => ipcRenderer.invoke('User:delete', username),
   userAuthenticate: (username, password) =>
     ipcRenderer.invoke('User:authenticate', username, password),
+  userCount: () => ipcRenderer.invoke('User:count'),
   lienApiCount: () => ipcRenderer.invoke('LienAPI:count'),
   lienApiInsert: (lien: string) => ipcRenderer.invoke('LienAPI:insert', lien),
   lienApiGet: () => ipcRenderer.invoke('LienAPI:get')

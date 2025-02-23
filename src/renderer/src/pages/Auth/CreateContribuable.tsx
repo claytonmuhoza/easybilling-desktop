@@ -4,26 +4,34 @@ import VerificationIdentifiant from './VerificationIdentifiant'
 import NewSocietePage from './NewSocietePage'
 import { entrepriseService } from '@renderer/services/EntrepriseService'
 import { Entreprise } from '@renderer/services/Entreprise'
+import NewUserForm from './NewUserForm'
+import userService from '@renderer/services/UserServices'
+import Login from './Login'
 
 const CreateContribuable: React.FC = () => {
   const [response, setResponse] = useState<apiLoginResponseType | undefined>(undefined)
   const [identifiant, setIdentifiant] = useState('')
   const [password, setPassword] = useState('')
   const [entreprise, setEntreprise] = useState<Entreprise | null>(null)
+  const [countUsers, setCountUsers] = useState(0)
   useEffect(() => {
     entrepriseService.getFirstEntreprise().then((entreprise) => {
       setEntreprise(entreprise)
+    })
+    userService.countUsers().then((count) => {
+      setCountUsers(count)
     })
   }, [])
   return (
     <>
       {entreprise ? (
-        <div>
-          <h1>
-            Vous avez déjà une entreprise enregistrée {entreprise.nom} ayant comme NIF{' '}
-            {entreprise.nif}
-          </h1>
-        </div>
+        countUsers === 0 ? (
+          <>
+            <NewUserForm />
+          </>
+        ) : (
+          <Login />
+        )
       ) : (
         <>
           {response && response.success ? (

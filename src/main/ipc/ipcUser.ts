@@ -16,6 +16,9 @@ ipcMain.handle('User:update', async (_event, userData) => {
 ipcMain.handle('User:delete', async (_event, username: string) => {
   return User.delete(username)
 })
+ipcMain.handle('User:count', async () => {
+  return User.count()
+})
 
 ipcMain.handle('User:authenticate', async (_event, username: string, password: string) => {
   return User.authenticate(username, password)

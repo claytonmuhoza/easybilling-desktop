@@ -17,7 +17,14 @@ export const entrepriseService = {
       return false
     }
   },
-
+  getAllEntreprises: async (): Promise<Entreprise[]> => {
+    try {
+      return await window.api.entrepriseGetAll()
+    } catch (error) {
+      console.error('Erreur lors de la récupération de toutes les entreprises', error)
+      return []
+    }
+  },
   /**
    * Récupère un token d'authentification via l'API OBR
    * @param id_systeme L'identifiant système
@@ -36,7 +43,7 @@ export const entrepriseService = {
     try {
       return await window.api.entrepriseGetFirst()
     } catch (error) {
-      console.error("Erreur lors de la récupération de la première entreprise", error)
+      console.error('Erreur lors de la récupération de la première entreprise', error)
       return null
     }
   },
@@ -44,7 +51,7 @@ export const entrepriseService = {
     try {
       return await window.api.entrepriseCount()
     } catch (error) {
-      console.error("Erreur lors du comptage des entreprises", error)
+      console.error('Erreur lors du comptage des entreprises', error)
       return 0
     }
   },

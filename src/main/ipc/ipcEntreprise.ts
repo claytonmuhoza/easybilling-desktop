@@ -25,3 +25,6 @@ ipcMain.handle('Entreprise:count', async () => {
 ipcMain.handle('Entreprise:getFirst', async () => {
   return Entreprise.getFirstEntreprise()
 })
+ipcMain.handle('Entreprise:getAll', async () => {
+  return Entreprise.getAllEntreprises()
+})

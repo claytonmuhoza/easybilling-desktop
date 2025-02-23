@@ -6,9 +6,10 @@ import ChooseLink from './pages/Auth/ChooseLink'
 import AuthLoading from './pages/Auth/AuthLoading'
 import CreateContribuable from './pages/Auth/CreateContribuable'
 import { LienAPIService } from './services/LienApiService'
+import { useAuth } from './context/AuthContext'
 
 function App(): JSX.Element {
-  const [isAuth, setIsAuth] = useState(false)
+  const { isAuthenticated, logout } = useAuth()
   const [loading, setLoading] = useState(true)
   const [lienAPICount, setLienAPICount] = useState(0)
 
@@ -24,7 +25,7 @@ function App(): JSX.Element {
       }
     }
     fetchLienApiCount()
-  }, [])
+  }, [isAuthenticated])
 
   return (
     <Flowbite theme={{ theme: flowbiteTheme }}>
@@ -33,12 +34,12 @@ function App(): JSX.Element {
           <AuthLoading />
         ) : lienAPICount === 0 ? (
           <ChooseLink setCount={setLienAPICount} />
-        ) : isAuth ? (
+        ) : isAuthenticated ? (
           <div className="flex flex-col items-center justify-center">
             <p>Authentifié</p>
             <button
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => setIsAuth(false)}
+              onClick={() => logout()}
             >
               Se déconnecter
             </button>

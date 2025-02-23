@@ -15,6 +15,7 @@ declare global {
       ) => Promise<import('../services/Entreprise').Entreprise | null>
       entrepriseGetFirst: () => Promise<import('../services/Entreprise').Entreprise | null>
       entrepriseCount: () => Promise<number>
+      entrepriseGetAll: () => Promise<import('../services/Entreprise').Entreprise[]>
       factureInsert: (
         factureData: import('../services/Facture').FactureData
       ) => Promise<number | null>
@@ -44,6 +45,7 @@ declare global {
         username: string,
         password: string
       ) => Promise<import('../services/User').User | null>
+      userCount: () => Promise<number>
       lienApiCount: () => Promise<number>
       lienApiInsert: (lien: string) => Promise<boolean>
       lienApiGet: () => Promise<string>

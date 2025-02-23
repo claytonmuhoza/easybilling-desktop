@@ -1,5 +1,12 @@
+import { NewUserSchema } from '@renderer/schemas'
 import type { User } from '@renderer/services/User'
-
+import { z } from 'zod'
+type userSchema = z.infer<typeof NewUserSchema>
+export interface userResponse {
+  success: boolean
+  msg: string
+  user: User | null
+}
 export const userService = {
   createUser: async (userData: User): Promise<boolean> => {
     try {
@@ -9,7 +16,23 @@ export const userService = {
       return false
     }
   },
-
+  userSchemaToUser: (userSchema: userSchema): User => {
+    return {
+      nom: userSchema.name,
+      prenom: userSchema.name,
+      username: userSchema.email,
+      password: userSchema.password,
+      entreprise_id: userSchema.societe_id
+    }
+  },
+  countUsers: async (): Promise<number> => {
+    try {
+      return await window.api.userCount()
+    } catch (error) {
+      console.error('Erreur lors du comptage des utilisateurs', error)
+      return 0
+    }
+  },
   getUser: async (username: string): Promise<User | null> => {
     try {
       return await window.api.userGet(username)
@@ -37,12 +60,22 @@ export const userService = {
     }
   },
 
-  authenticateUser: async (username: string, password: string): Promise<User | null> => {
+  authenticateUser: async ({
+    username,
+    password
+  }: {
+    username: string
+    password: string
+  }): Promise<userResponse> => {
     try {
-      return await window.api.userAuthenticate(username, password)
+      const user = await window.api.userAuthenticate(username, password)
+      if (!user) {
+        return { success: false, msg: "Mot de passe ou nom d'utilisateur incorrect", user: null }
+      }
+      return { success: true, msg: 'Authentification réussie', user }
     } catch (error) {
       console.error("Erreur lors de l'authentification de l'utilisateur", error)
-      return null
+      return { success: false, msg: 'Authentification échouée', user: null }
     }
   }
 }
