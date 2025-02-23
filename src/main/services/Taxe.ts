@@ -120,6 +120,7 @@ export class ValeurTaxe {
     const stmt = db.prepare('SELECT * FROM valeurs_taxe WHERE id_taxe = ?')
     const rows = stmt.all(idTaxe)
     return rows.map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (row: any) =>
         new ValeurTaxe({
           id: row.id,

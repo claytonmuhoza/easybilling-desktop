@@ -1,136 +1,223 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import Database from 'better-sqlite3'
 import { app } from 'electron'
 import path from 'path'
 
-export function connectionToDatabase() {
+export function connectionToDatabase(): Database {
   const databasePath = path.join(app.getPath('userData'), 'database.db')
   console.log('Database Path:', databasePath)
   const db = new Database(databasePath)
 
-  // Création des tables si elles n'existent pas déjà
   db.exec(`
-        CREATE TABLE IF NOT EXISTS lien_api (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            lien TEXT UNIQUE NOT NULL
-        );
-    `)
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS taxe (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT UNIQUE NOT NULL,
-            type TEXT CHECK(type IN ('tva', 'pfl', 'autre')) NOT NULL,
-            is_pourcentage BOOLEAN NOT NULL,
-            valeur_non_pourcentage REAL
-        );
-    `)
-
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS valeurs_taxe (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_taxe INTEGER NOT NULL,
-            valeur REAL NOT NULL,
-            FOREIGN KEY (id_taxe) REFERENCES taxe(id) ON DELETE CASCADE,
-            UNIQUE(id_taxe, valeur)
-        );
-    `)
-  const prepare = db.prepare(`select count(*) as count from taxe`)
-  const count = prepare.get()
-  if (count.count === 0) {
+    CREATE TABLE IF NOT EXISTS lien_api (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lien TEXT UNIQUE NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS taxe (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT UNIQUE NOT NULL,
+      type TEXT CHECK(type IN ('tva','pfl','autre')) NOT NULL,
+      is_pourcentage BOOLEAN NOT NULL,
+      valeur_non_pourcentage REAL
+    );
+    CREATE TABLE IF NOT EXISTS valeurs_taxe (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_taxe INTEGER NOT NULL,
+      valeur REAL NOT NULL,
+      FOREIGN KEY (id_taxe) REFERENCES taxe(id) ON DELETE CASCADE,
+      UNIQUE(id_taxe, valeur)
+    );
+    CREATE TABLE IF NOT EXISTS entreprise (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
+      nif TEXT NOT NULL UNIQUE,
+      rc TEXT NOT NULL,
+      direction_fiscale TEXT NOT NULL CHECK(direction_fiscale IN ('DPMC','DMC','DGC')),
+      type_contribuable TEXT NOT NULL,
+      forme_juridique TEXT,
+      secteur_activite TEXT,
+      telephone TEXT,
+      boite_postale TEXT,
+      email TEXT,
+      adresse_province TEXT,
+      adresse_commune TEXT,
+      adresse_quartier TEXT,
+      adresse_avenue TEXT,
+      adresse_numero TEXT,
+      identifiant_systeme TEXT NOT NULL,
+      mot_de_passe_systeme TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS assujetti (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entreprise_id INTEGER NOT NULL,
+      taxe_id INTEGER NOT NULL,
+      valeur_par_defaut REAL,
+      is_pourcentage BOOLEAN,
+      FOREIGN KEY (entreprise_id) REFERENCES entreprise(id) ON DELETE CASCADE,
+      FOREIGN KEY (taxe_id) REFERENCES taxe(id) ON DELETE CASCADE,
+      UNIQUE(entreprise_id, taxe_id)
+    );
+    CREATE TABLE IF NOT EXISTS utilisateur (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
+      prenom TEXT NOT NULL,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      entreprise_id INTEGER NOT NULL,
+      FOREIGN KEY (entreprise_id) REFERENCES entreprise(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS categorie_produit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      libelle TEXT NOT NULL UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS unite_mesure (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      libelle TEXT NOT NULL UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS produit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
+      categorie_id INTEGER NOT NULL,
+      unite_mesure_id INTEGER NOT NULL,
+      prix_htva REAL NOT NULL,
+      taxe_conso_id INTEGER,
+      taxe_service_id INTEGER,
+      FOREIGN KEY (categorie_id) REFERENCES categorie_produit(id) ON DELETE CASCADE,
+      FOREIGN KEY (unite_mesure_id) REFERENCES unite_mesure(id) ON DELETE CASCADE,
+      FOREIGN KEY (taxe_conso_id) REFERENCES taxe(id),
+      FOREIGN KEY (taxe_service_id) REFERENCES taxe(id)
+    );
+    CREATE TABLE IF NOT EXISTS stock_mouvement (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      produit_id INTEGER NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('EN','ER','EI','EAJ','ET','EAU','SN','SP','SV','SD','SC','SAJ','ST','SAU')),
+      quantite REAL NOT NULL,
+      date_mouvement TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (produit_id) REFERENCES produit(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS client (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
+      nif TEXT UNIQUE,
+      adresse TEXT,
+      telephone TEXT
+    );
+    CREATE TABLE IF NOT EXISTS facture (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      numero TEXT NOT NULL UNIQUE,
+      date_facture TEXT DEFAULT CURRENT_TIMESTAMP,
+      utilisateur_id INTEGER NOT NULL,
+      client_id INTEGER NOT NULL,
+      montant_htva REAL NOT NULL,
+      montant_tva REAL DEFAULT 0,
+      montant_pfl REAL DEFAULT 0,
+      montant_total REAL NOT NULL,
+      FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id),
+      FOREIGN KEY (client_id) REFERENCES client(id)
+    );
+    CREATE TABLE IF NOT EXISTS facture_item (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      facture_id INTEGER NOT NULL,
+      produit_id INTEGER NOT NULL,
+      quantite REAL NOT NULL,
+      prix_unitaire REAL NOT NULL,
+      taxe_conso REAL DEFAULT 0,
+      taxe_service REAL DEFAULT 0,
+      montant_tva REAL DEFAULT 0,
+      montant_pfl REAL DEFAULT 0,
+      montant_total REAL NOT NULL,
+      FOREIGN KEY (facture_id) REFERENCES facture(id) ON DELETE CASCADE,
+      FOREIGN KEY (produit_id) REFERENCES produit(id) ON DELETE CASCADE
+    );
+  `)
+    console.log('Tables created')
+  // Initialiser les taxes par défaut si la table est vide
+  const prepare = db.prepare('SELECT COUNT(*) as count FROM taxe')
+  const countRow = prepare.get()
+  console.log('Nombre de taxes')
+  if (countRow.count === 0) {
+    console.log('Initialisation des taxes par défaut')
     // Insertion de la taxe 'tva'
-    const insertTaxe = db.prepare(`
-            INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
-            VALUES (?, ?, ?, ?)
-        `)
-    insertTaxe.run('tva', 'tva', 1, 0)
-
-    // Récupération de l'ID de la taxe 'tva'
-    const getTaxeId = db.prepare(`SELECT id FROM taxe WHERE nom = ?`)
-    const taxeRow = getTaxeId.get('tva')
-
+    const insertTaxeStmt = db.prepare(`
+      INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
+      VALUES (?, ?, ?, ?)
+    `)
+    insertTaxeStmt.run('tva', 'tva', 1, 0)
+    // Récupérer l'ID de la taxe 'tva'
+    const getTaxeIdStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
+    const taxeRow = getTaxeIdStmt.get('tva')
     if (taxeRow) {
       const taxeId = taxeRow.id
-
-      // Insertion des valeurs associées
-      const insertValeurTaxe = db.prepare(`
-                INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
-                VALUES (?, ?)
-            `)
-
-      const valeurs = [20, 18, 0]
-      for (const valeur of valeurs) {
-        insertValeurTaxe.run(taxeId, valeur)
+      const insertValeurTaxeStmt = db.prepare(`
+        INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
+        VALUES (?, ?)
+      `)
+      const valeursTVA = [20, 18, 0]
+      for (const valeur of valeursTVA) {
+        insertValeurTaxeStmt.run(taxeId, valeur)
       }
     }
-
-    // Insertion de la taxe 'plf'
-    const insertplf = db.prepare(`
-            INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
-            VALUES (?, ?, ?, ?)
-        `)
-    insertplf.run('pfl', 'pfl', 0, 0)
-
+    // Insertion de la taxe 'pfl'
+    insertTaxeStmt.run('pfl', 'pfl', 0, 0)
     // Insertion de la taxe 'taxe de consommation'
-    const insertTaxeConsommation = db.prepare(`
-            INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
-            VALUES (?, ?, ?, ?)
-        `)
-    insertTaxeConsommation.run('taxe de consommation', 'autre', 1, 0)
-
-    // Récupération de l'ID de la taxe 'taxe de consommation'
-    const getTaxeConsommationId = db.prepare(`SELECT id FROM taxe WHERE nom = ?`)
-    const taxeConsommationRow = getTaxeConsommationId.get('taxe de consommation')
-
+    insertTaxeStmt.run('taxe de consommation', 'autre', 1, 0)
+    // Récupérer l'ID de la taxe 'taxe de consommation'
+    const getTaxeConsommationStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
+    const taxeConsommationRow = getTaxeConsommationStmt.get('taxe de consommation')
     if (taxeConsommationRow) {
       const taxeConsommationId = taxeConsommationRow.id
-
-      // Insertion des valeurs associées
-      const insertValeurTaxeConsommation = db.prepare(`
-                INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
-                VALUES (?, ?)
-            `)
-
+      const insertValeurTaxeConsommationStmt = db.prepare(`
+        INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
+        VALUES (?, ?)
+      `)
       const valeursConsommation = [10, 5, 0]
       for (const valeur of valeursConsommation) {
-        insertValeurTaxeConsommation.run(taxeConsommationId, valeur)
+        insertValeurTaxeConsommationStmt.run(taxeConsommationId, valeur)
       }
     }
   }
-  db.exec(`
-        -- Table des entreprises
-        CREATE TABLE IF NOT EXISTS entreprise (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT NOT NULL,
-            nif TEXT NOT NULL UNIQUE,
-            rc TEXT NOT NULL,
-            direction_fiscale TEXT NOT NULL,
-            type_contribuable TEXT NOT NULL,
-            forme_juridique TEXT,
-            secteur_activite TEXT,
-            telephone TEXT,
-            boite_postale TEXT,
-            email TEXT,
-            adresse_province TEXT,
-            adresse_commune TEXT,
-            adresse_quartier TEXT,
-            adresse_avenue TEXT,
-            adresse_numero TEXT,
-            identifiant_systeme TEXT NOT NULL,
-            mot_de_passe_systeme TEXT NOT NULL
-        );
 
-        -- Table des taxes assujetties
-        CREATE TABLE IF NOT EXISTS assujetti (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entreprise_id INTEGER NOT NULL,
-            taxe_id INTEGER NOT NULL,
-            valeur_par_defaut REAL,
-            is_pourcentage BOOLEAN,
-            FOREIGN KEY (entreprise_id) REFERENCES entreprise(id) ON DELETE CASCADE,
-            FOREIGN KEY (taxe_id) REFERENCES taxe(id) ON DELETE CASCADE,
-            UNIQUE(entreprise_id, taxe_id)
-        );
-    `)
+  console.log('Database initialized')
 
   return db
+}
+export function initialisationTaxes(db: Database): void {
+  console.log('Initialisation des taxes par défaut')
+  // Insertion de la taxe 'tva'
+  const insertTaxeStmt = db.prepare(`
+    INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
+    VALUES (?, ?, ?, ?)
+  `)
+  insertTaxeStmt.run('tva', 'tva', 1, 0)
+  // Récupérer l'ID de la taxe 'tva'
+  const getTaxeIdStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
+  const taxeRow = getTaxeIdStmt.get('tva')
+  if (taxeRow) {
+    const taxeId = taxeRow.id
+    const insertValeurTaxeStmt = db.prepare(`
+      INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
+      VALUES (?, ?)
+    `)
+    const valeursTVA = [20, 18, 0]
+    for (const valeur of valeursTVA) {
+      insertValeurTaxeStmt.run(taxeId, valeur)
+    }
+  }
+  // Insertion de la taxe 'pfl'
+  insertTaxeStmt.run('pfl', 'pfl', 0, 0)
+  // Insertion de la taxe 'taxe de consommation'
+  insertTaxeStmt.run('taxe de consommation', 'autre', 1, 0)
+  // Récupérer l'ID de la taxe 'taxe de consommation'
+  const getTaxeConsommationStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
+  const taxeConsommationRow = getTaxeConsommationStmt.get('taxe de consommation')
+  if (taxeConsommationRow) {
+    const taxeConsommationId = taxeConsommationRow.id
+    const insertValeurTaxeConsommationStmt = db.prepare(`
+      INSERT OR IGNORE INTO valeurs_taxe (id_taxe, valeur)
+      VALUES (?, ?)
+    `)
+    const valeursConsommation = [10, 5, 0]
+    for (const valeur of valeursConsommation) {
+      insertValeurTaxeConsommationStmt.run(taxeConsommationId, valeur)
+    }
+  }
 }

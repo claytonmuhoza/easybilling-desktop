@@ -1,6 +1,5 @@
 import { connectionToDatabase } from './Database'
 
-
 export class Produit {
   id?: number
   nom: string
@@ -66,6 +65,7 @@ export class Produit {
   static getAllProduits(): Produit[] {
     const db = connectionToDatabase()
     const rows = db.prepare('SELECT * FROM produit').all()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rows.map((row: any) => new Produit(row as Produit))
   }
 
