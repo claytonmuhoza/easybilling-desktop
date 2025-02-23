@@ -1,6 +1,8 @@
-import type { Entreprise } from '@renderer/services/Entreprise'
+import type { Entreprise, EntrepriseData } from '@renderer/services/Entreprise'
 import type { apiLoginResponseType } from '@renderer/services/ApiObr'
-
+import { z } from 'zod'
+import { contribuableConfCreationSchema } from '@renderer/schemas'
+type ContribuableForm = z.infer<typeof contribuableConfCreationSchema>
 export const entrepriseService = {
   /**
    * Insère une entreprise dans la base de données via IPC
@@ -49,5 +51,36 @@ export const entrepriseService = {
     password_systeme: string
   ): Promise<apiLoginResponseType> => {
     return await window.api.entrepriseIsContribuable(id_systeme, password_systeme)
+  },
+  contribuableFormToEntrepriseData: (form: ContribuableForm): EntrepriseData =>{
+    return {
+      nom: form.nom,
+      nif: form.nif,
+      rc: form.rc,
+      direction_fiscale: form.direction_fiscale,
+      type_contribuable: form.type_contribuable,
+      forme_juridique: form.forme_juridique,
+      secteur_activite: form.raison_social,
+      telephone: form.contact_telephone,
+      boite_postale: form.contact_bp,
+      email: form.contact_email,
+      adresse_province: form.adresse_province,
+      adresse_commune: form.adresse_commune,
+      adresse_quartier: form.adresse_quartier,
+      adresse_avenue: form.adresse_avenue,
+      adresse_numero: form.adresse_numero,
+      identifiant_systeme: form.identifiant_systeme,
+      mot_de_passe_systeme: form.mot_de_passe_systeme,
+      taxes_assujetti: form.taxes.map((taxe) => ({
+        taxe: {
+          nom: taxe.nom,
+          type: taxe.nom === 'TVA' ? 'tva' : taxe.nom === 'PFL' ? 'pfl' : 'autre',
+          is_pourcentage: taxe.est_pourcentage,
+          valeur_non_pourcentage: taxe.est_pourcentage ? null : taxe.valeur_defaut
+        },
+        valeur_par_defaut: taxe.valeur_defaut,
+        is_pourcentage: taxe.est_pourcentage
+      }))
+    }
   }
 }

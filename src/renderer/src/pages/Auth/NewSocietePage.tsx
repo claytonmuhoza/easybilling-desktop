@@ -1,42 +1,89 @@
-import React, { useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, DarkThemeToggle, Label, Select, TextInput } from 'flowbite-react'
+'use client'
+
 import { contribuableConfCreationSchema } from '@renderer/schemas'
-import { taxeService } from '@renderer/services/TaxeService'
-import { Taxe } from '@renderer/services/Taxe'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  Alert,
+  Button,
+  Checkbox,
+  DarkThemeToggle,
+  Label,
+  Radio,
+  Select,
+  TextInput
+} from 'flowbite-react'
+// import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+import { Controller, useForm } from 'react-hook-form'
+import { HiLocationMarker, HiLockClosed, HiOfficeBuilding, HiPhone } from 'react-icons/hi'
 import { z } from 'zod'
-type ContribuableForm = z.infer<typeof contribuableConfCreationSchema>
-
-interface NewSocietePageProps {
-  identifiant_sys: string
-  password_sys: string
-  onBack: () => void
-}
-
-const NewSocietePage: React.FC<NewSocietePageProps> = ({
+import { Taxe } from '@renderer/services/Taxe'
+import { taxeService } from '@renderer/services/TaxeService'
+import { entrepriseService } from '@renderer/services/EntrepriseService'
+const NewSocietePage = ({
   identifiant_sys,
   password_sys,
-  onBack
-}) => {
+  setBackToPreviousPage
+}: {
+  identifiant_sys: string
+  password_sys: string
+  setBackToPreviousPage: (undefined) => void
+}): JSX.Element => {
+  // const router = useRouter()
   const [isPending, setPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | undefined>()
   const [taxes, setTaxes] = useState<Taxe[]>([])
   const [loadingPage, setLoadingPage] = useState(true)
-
-  // Extraction du NIF à partir de l'identifiant système
-  const getNifFromIdentifiant = (): string => {
+  const getNIf = (): string => {
     const match = identifiant_sys.match(/(?:ws|wsl)(.{10})/)
-    return match ? match[1] : ''
-  }
 
-  const { control, register, handleSubmit, reset, watch } = useForm<ContribuableForm>({
+    if (match) {
+      const result = match[1] // Les 10 caractères extraits
+      return result
+    } else {
+      return ''
+    }
+  }
+  const [, setData] = useState<z.infer<typeof contribuableConfCreationSchema> | undefined>()
+  useEffect(() => {
+    setLoadingPage(true)
+    taxeService
+      .getAllTaxes()
+      .then((data) => {
+        setTaxes(data)
+      })
+      .finally(() => {
+        setLoadingPage(false)
+      })
+  }, [])
+  const onSubmit = (values: z.infer<typeof contribuableConfCreationSchema>): void => {
+    setPending(true)
+    setErrorMessage(undefined)
+    setData(values)
+    entrepriseService
+      .insertEntreprise(entrepriseService.contribuableFormToEntrepriseData(values))
+      .then((res) => {
+        if (res) {
+          setBackToPreviousPage(undefined)
+        } else {
+          setErrorMessage("Erreur lors de l'enregistrement du contribuable")
+        }
+      })
+      .catch(() => {
+        setErrorMessage("Erreur lors de l'enregistrement du contribuable")
+      })
+      .finally(() => {
+        setPending(false)
+      })
+  }
+  const form = useForm<z.infer<typeof contribuableConfCreationSchema>>({
     resolver: zodResolver(contribuableConfCreationSchema),
     defaultValues: {
       type_contribuable: '1',
       direction_fiscale: 'DPMC',
       nom: '',
-      nif: getNifFromIdentifiant(),
+      nif: getNIf(),
       forme_juridique: '',
       raison_social: '',
       taxes: [],
@@ -53,35 +100,20 @@ const NewSocietePage: React.FC<NewSocietePageProps> = ({
     }
   })
 
-  // Charger les taxes au montage du composant
-  useEffect(() => {
-    setLoadingPage(true)
-    taxeService
-      .getAllTaxes()
-      .then((data) => {
-        setTaxes(data)
-      })
-      .catch((error) => {
-        console.error('Erreur lors du chargement des taxes :', error)
-      })
-      .finally(() => setLoadingPage(false))
-  }, [])
-
-  // Réinitialiser le formulaire lorsque les taxes sont chargées
   useEffect(() => {
     if (!loadingPage) {
-      reset({
+      form.reset({
         type_contribuable: '1',
         direction_fiscale: 'DPMC',
         nom: '',
-        nif: getNifFromIdentifiant(),
+        nif: getNIf(),
         forme_juridique: '',
         raison_social: '',
         taxes: taxes.map((taxe) => ({
           nom: taxe.nom,
           assujetti: false,
-          valeur_defaut: taxe.valeur_non_pourcentage || 0,
-          est_pourcentage: taxe.is_pourcentage,
+          valeur_defaut: taxe.valeur_non_pourcentage ? taxe.valeur_non_pourcentage : 0,
+          est_pourcentage: taxe.is_pourcentage ? true : false,
           values: taxe.valeurs,
           valeur_custom: false
         })),
@@ -97,315 +129,826 @@ const NewSocietePage: React.FC<NewSocietePageProps> = ({
         mot_de_passe_systeme: password_sys
       })
     }
-  }, [loadingPage, taxes, reset, identifiant_sys, password_sys])
-
-  const onSubmit = (values: ContribuableForm): void => {
-    setPending(true)
-    setErrorMessage(undefined)
-    // Ici, vous pouvez traiter la soumission (ex: appeler un service pour enregistrer l'entreprise)
-    console.log('Valeurs du formulaire :', values)
-    // Simuler un délai pour la soumission
-    setTimeout(() => {
-      setPending(false)
-      // Vous pouvez naviguer ou afficher un message de succès ici
-    }, 1000)
-  }
-
-  if (loadingPage) {
-    return <div>Chargement...</div>
-  }
-
-  return (
-    <div className="min-h-[100dvh] flex w-full items-center justify-center p-4">
-      <div className="w-full max-w-4xl rounded-xl border border-gray-400 bg-white bg-opacity-70 p-4 backdrop-blur-sm dark:bg-gray-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-3xl font-bold text-primary">Easy | BILLING</span>
+  }, [loadingPage, taxes, identifiant_sys, password_sys, form])
+  return loadingPage ? (
+    <div>Chargement...</div>
+  ) : (
+    <div className="md: flex h-full min-h-[100dvh] w-full flex-row gap-2 md:py-5">
+      <div className="flex h-full min-h-screen w-screen flex-row items-center justify-center">
+        {errorMessage ? (
+          <div className="absolute left-0 top-0 z-10  flex w-full flex-col items-center justify-center p-4">
+            <Alert color="failure" onDismiss={() => setErrorMessage(undefined)} className="">
+              <span className="font-medium">Erreur!</span> {errorMessage}
+            </Alert>
           </div>
-          <DarkThemeToggle />
-        </div>
-        <h2 className="mt-4 text-2xl font-semibold text-gray-700 dark:text-slate-200">
-          Enregistrement du Contribuable
-        </h2>
-        {errorMessage && (
-          <Alert color="failure" onDismiss={() => setErrorMessage(undefined)} className="my-4">
-            <span className="font-medium">Erreur!</span> {errorMessage}
-          </Alert>
+        ) : (
+          ''
         )}
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-6">
-          {/* Informations Générales */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="nom" value="Nom" />
-              <TextInput
-                id="nom"
-                {...register('nom')}
-                placeholder="Nom de l'entreprise ou de la personne physique"
-                required
-              />
+        <div className="borer-2 flex min-h-[80dvh] w-full flex-col items-center justify-center rounded-xl bg-opacity-70 bg-clip-padding text-gray-700 backdrop-blur-sm backdrop-filter dark:border-gray-400 dark:bg-dark md:flex-row-reverse md:justify-between md:p-6 lg:w-10/12 md-max:gap-4 ">
+          <div className="flex w-full flex-col gap-4 rounded-md border border-gray-700 p-4 py-6 md:p-6 md:py-10">
+            <div className="flex flex-row items-center justify-between">
+              <div className="flex w-full flex-row items-center justify-start gap-4 ">
+                <span className="text-6 font-bold text-primary sm:text-8">Easy</span>
+                <span className="text-6 font-bold text-dark  dark:text-slate-200 sm:text-8">
+                  {' '}
+                  | BILLING
+                </span>
+              </div>
+              <DarkThemeToggle />
             </div>
-            <div>
-              <Label htmlFor="nif" value="NIF" />
-              <TextInput id="nif" {...register('nif')} placeholder="NIF" required />
+            <div className="flex items-center gap-4 border-b border-gray-700 pb-2 text-5 font-semibold dark:text-slate-200">
+              <span>Enregistrement du Contribuable</span>
+              <HiOfficeBuilding />
             </div>
-            <div>
-              <Label htmlFor="rc" value="Registre de commerce" />
-              <TextInput id="rc" {...register('rc')} placeholder="RC" required />
-            </div>
-            <div>
-              <Label htmlFor="direction_fiscale" value="Direction fiscale" />
-              <Select id="direction_fiscale" {...register('direction_fiscale')} required>
-                <option value="DPMC">DPMC</option>
-                <option value="DMC">DMC</option>
-                <option value="DGC">DGC</option>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="type_contribuable" value="Type contribuable" />
-              <Select id="type_contribuable" {...register('type_contribuable')} required>
-                <option value="2">Personne Morale</option>
-                <option value="1">Personne Physique</option>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="forme_juridique" value="Forme juridique" />
-              <TextInput
-                id="forme_juridique"
-                {...register('forme_juridique')}
-                placeholder="Forme juridique"
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="raison_social" value="Raison sociale" />
-              <TextInput
-                id="raison_social"
-                {...register('raison_social')}
-                placeholder="Raison sociale de l'entreprise"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Section Taxes */}
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Taxes</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {watch('taxes').map((taxe, index) => (
-                <div key={index} className="border p-4 rounded-md">
-                  <p className="font-semibold">{taxe.nom}</p>
-                  <Controller
-                    control={control}
-                    name={`taxes.${index}.assujetti`}
-                    render={({ field }) => (
-                      <div className="flex items-center gap-4">
-                        <label>
-                          <input
-                            type="radio"
-                            {...field}
-                            value="true"
-                            checked={field.value === true}
-                            onChange={() => field.onChange(true)}
-                          />
-                          Oui
-                        </label>
-                        <label>
-                          <input
-                            type="radio"
-                            {...field}
-                            value="false"
-                            checked={field.value === false}
-                            onChange={() => field.onChange(false)}
-                          />
-                          Non
-                        </label>
+            <form
+              className="w-md flex flex-col gap-4 text-gray-700 dark:text-slate-200"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="nom"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      {' '}
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="nom_entreprise"
+                          value="Nom"
+                          color={invalid ? 'failure' : undefined}
+                        />
                       </div>
-                    )}
-                  />
-                  {taxe.assujetti && (
-                    <>
-                      <Controller
-                        control={control}
-                        name={`taxes.${index}.est_pourcentage`}
-                        render={({ field }) => (
-                          <div className="flex items-center gap-4">
-                            <label>
-                              <input
-                                type="radio"
-                                {...field}
-                                value="true"
-                                checked={field.value === true}
-                                onChange={() => field.onChange(true)}
-                              />
-                              Pourcentage
-                            </label>
-                            <label>
-                              <input
-                                type="radio"
-                                {...field}
-                                value="false"
-                                checked={field.value === false}
-                                onChange={() => field.onChange(false)}
-                              />
-                              Fixe
-                            </label>
-                          </div>
-                        )}
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        color={invalid ? 'failure' : undefined}
+                        id="nom_entreprise"
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Entrer le nom de l'entreprise ou de la personne physique"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
                       />
-                      {taxe.est_pourcentage ? (
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="nif"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label htmlFor="nif" color={invalid ? 'failure' : undefined} value="NIF" />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        id="nif"
+                        autoComplete="off"
+                        type="text"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer le NIF de l'entreprise ou de la personne physique"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="rc"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="registre_commerce_entreprise"
+                          value="Registre de commerce"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        color={invalid ? 'failure' : undefined}
+                        autoComplete="off"
+                        id="registre_commerce_entreprise"
+                        type="text"
+                        placeholder="Entrer le nom de l'entreprise ou de la personne physique"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="direction_fiscale"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="direction_fiscal_entreprise"
+                          value="Direction fiscal"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <Select
+                        id="direction_fiscal_entreprise"
+                        {...field}
+                        color={invalid ? 'failure' : undefined}
+                        disabled={isPending}
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      >
+                        <option value="DPMC">DPMC</option>
+                        <option value="DMC">DMC</option>
+                        <option value="DGC">DGC</option>
+                      </Select>
+                    </div>
+                  )}
+                />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="type_contribuable"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="type_contribuable_entreprise"
+                          value="Type contribuable"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <Select
+                        {...field}
+                        disabled={isPending}
+                        color={invalid ? 'failure' : undefined}
+                        id="type_contribuable_entreprise"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      >
+                        <option value="2">Personne Morale</option>
+                        <option value="1">Personne physique</option>
+                      </Select>
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="forme_juridique"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="forme_juridique_entreprise"
+                          value="Forme juridique"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        id="forme_juridique_entreprise"
+                        type="text"
+                        autoComplete="off"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer la forme juridique du contribuable"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="raison_social"
+                  disabled={isPending}
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="raison_social_entreprise"
+                          value="secteur d'activité"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        {...field}
+                        id="raison_social_entreprise"
+                        type="text"
+                        autoComplete="off"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer la raison sociel de l'entreprise"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                {form.watch('taxes').map((taxe, index) => (
+                  <div key={index}>
+                    <Controller
+                      control={form.control}
+                      name={`taxes.${index}.assujetti`}
+                      render={({ field: { onBlur, onChange, value } }) => (
+                        <fieldset className="flex max-w-md flex-col gap-4">
+                          <legend className="mb-4">
+                            {taxe.nom == 'pfl' ? (
+                              'Assujettit  au prélevement forfaitaire'
+                            ) : (
+                              <>Assujettit à la {taxe.nom}</>
+                            )}
+                          </legend>
+                          <div className="flex items-center gap-2">
+                            <Radio
+                              id={`oui_assujetti_${index}`}
+                              disabled={isPending}
+                              onBlur={onBlur} // notify when input is touched
+                              onChange={() => onChange(true)} // send value to hook form
+                              checked={value === true}
+                            />
+                            <Label htmlFor={`oui_assujetti_${index}`}>Oui</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Radio
+                              id={`non_assujetti_${index}`}
+                              disabled={isPending}
+                              onBlur={onBlur} // notify when input is touched
+                              onChange={() => onChange(false)} // send value to hook form
+                              checked={value === false}
+                            />
+                            <Label htmlFor={`non_assujetti_${index}`}>Non</Label>
+                          </div>
+                        </fieldset>
+                      )}
+                    />
+
+                    {/* Affichage conditionnel basé sur la valeur d'assujetti */}
+                    {taxe.assujetti && (
+                      <>
                         <Controller
-                          control={control}
-                          name={`taxes.${index}.valeur_defaut`}
-                          render={({ field }) => (
-                            <Select
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                              required
-                            >
-                              {taxe.values.map((val: number, idx: number) => (
-                                <option key={idx} value={val}>
-                                  {val} %
-                                </option>
-                              ))}
-                            </Select>
+                          control={form.control}
+                          name={`taxes.${index}.est_pourcentage`}
+                          render={({ field: { onBlur, onChange, value } }) => (
+                            <fieldset className="flex max-w-md flex-col gap-4">
+                              <legend className="mb-4">
+                                La valeur de la {taxe.nom} est un pourcentage ?
+                              </legend>
+                              <div className="flex items-center gap-2">
+                                <Radio
+                                  id={`oui_pourcentage_${index}`}
+                                  disabled={isPending}
+                                  onBlur={onBlur} // notify when input is touched
+                                  onChange={() => onChange(true)} // send value to hook form
+                                  checked={value === true}
+                                />
+                                <Label htmlFor={`oui_pourcentage_${index}`}>Oui</Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Radio
+                                  id={`non_pourcentage_${index}`}
+                                  disabled={isPending}
+                                  onBlur={onBlur} // notify when input is touched
+                                  onChange={() => onChange(false)} // send value to hook form
+                                  checked={value === false}
+                                />
+                                <Label htmlFor={`non_pourcentage_${index}`}>Non</Label>
+                              </div>
+                            </fieldset>
                           )}
                         />
-                      ) : (
-                        <TextInput
-                          {...register(`taxes.${index}.valeur_defaut` as const)}
-                          type="number"
-                          required
-                          placeholder="Entrer la valeur fixe"
+
+                        {/* Affichage conditionnel basé sur est_pourcentage */}
+                        {taxe.est_pourcentage ? (
+                          <div>
+                            <div>
+                              {taxe.est_pourcentage &&
+                              !taxe.valeur_custom &&
+                              taxe.values.length > 0 ? (
+                                <Controller
+                                  control={form.control}
+                                  name={`taxes.${index}.valeur_defaut`}
+                                  render={({ field, fieldState: { invalid, error } }) => (
+                                    <>
+                                      <Select
+                                        disabled={isPending}
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                        color={invalid ? 'failure' : undefined}
+                                        helperText={
+                                          invalid ? (
+                                            <>
+                                              <span className="font-medium">Oops!</span>{' '}
+                                              {error ? error?.message : ''}
+                                            </>
+                                          ) : (
+                                            <></>
+                                          )
+                                        }
+                                        required
+                                      >
+                                        {taxe.values.map((value, index) => (
+                                          <option key={index} value={value}>
+                                            {value}%
+                                          </option>
+                                        ))}
+                                      </Select>
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Checkbox
+                                          id={`custom_value_${index}`}
+                                          onChange={(e) => {
+                                            form.setValue(
+                                              `taxes.${index}.valeur_custom`,
+                                              e.target.checked
+                                            )
+                                          }}
+                                        />
+                                        <Label htmlFor={`custom_value_${index}`}>
+                                          La valeur n&apos;est pas dans la liste?
+                                        </Label>
+                                      </div>
+                                    </>
+                                  )}
+                                />
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <TextInput
+                                    {...form.register(`taxes.${index}.valeur_defaut`)}
+                                    disabled={isPending}
+                                    required
+                                    id={`taxes.${index}.valeur_defaut`}
+                                    type="number"
+                                    placeholder="Entrer la valeur par defaut"
+                                  />
+                                  <Label htmlFor={`taxes.${index}.valeur_defaut`}>%</Label>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <TextInput
+                            {...form.register(`taxes.${index}.valeur_defaut`)}
+                            disabled={isPending}
+                            required
+                            type="number"
+                            placeholder="Entrer la valeur par defaut"
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-4 border-b border-gray-700 pb-2 text-5 font-semibold dark:text-slate-200">
+                <span>Contacts</span>
+                <HiPhone />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="contact_telephone"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="telephone_entreprise"
+                          value="Téléphone"
+                          color={invalid ? 'failure' : undefined}
                         />
-                      )}
-                    </>
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        id="telephone_entreprise"
+                        type="text"
+                        autoComplete="off"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer le numéro de téléphone"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
                   )}
-                </div>
-              ))}
-            </div>
-          </div>
+                />
+                <Controller
+                  control={form.control}
+                  name="contact_bp"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="boite_postale_entreprise"
+                          value="Boite postale(non obligatoire)"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        disabled={isPending}
+                        id="boite_postale_entreprise"
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Entrer la boite postale"
+                        color={invalid ? 'failure' : undefined}
+                        {...field}
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                      />
+                    </div>
+                  )}
+                />
+              </div>
 
-          {/* Section Contacts */}
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Contacts</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="contact_telephone" value="Téléphone" />
-                <TextInput
-                  id="contact_telephone"
-                  {...register('contact_telephone')}
-                  placeholder="Téléphone"
-                  required
+              <Controller
+                control={form.control}
+                name="contact_email"
+                render={({ field, fieldState: { invalid, error } }) => (
+                  <div>
+                    <div className="mb-2 block">
+                      <Label
+                        htmlFor="email_entreprise"
+                        value="Email"
+                        color={invalid ? 'failure' : undefined}
+                      />
+                    </div>
+                    <TextInput
+                      disabled={isPending}
+                      id="email_entreprise"
+                      type="email"
+                      autoComplete="off"
+                      placeholder="Entrer l'adresse email"
+                      color={invalid ? 'failure' : undefined}
+                      helperText={
+                        invalid ? (
+                          <>
+                            <span className="font-medium">Oops!</span> {error ? error?.message : ''}
+                          </>
+                        ) : (
+                          <></>
+                        )
+                      }
+                      {...field}
+                    />
+                  </div>
+                )}
+              />
+              <div className="flex items-center gap-4 border-b border-b border-gray-700 pb-2 pb-2 text-5 font-semibold dark:text-slate-200">
+                <span>Adresse de l&apos;entreprise</span>
+                <HiLocationMarker />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="adresse_province"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="adresse_province_entreprise"
+                          value="Province"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        disabled={isPending}
+                        {...field}
+                        id="adresse_province_entreprise"
+                        type="text"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer la province"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="adresse_commune"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="adresse_commune_entreprise"
+                          value="Commune"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        disabled={isPending}
+                        {...field}
+                        id="adresse_commune_entreprise"
+                        type="text"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer la commune"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
                 />
               </div>
-              <div>
-                <Label htmlFor="contact_bp" value="Boîte postale (optionnel)" />
-                <TextInput
-                  id="contact_bp"
-                  {...register('contact_bp')}
-                  placeholder="Boîte postale"
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="adresse_quartier"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="adresse_quartier_entreprise"
+                          value="quartier"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        disabled={isPending}
+                        {...field}
+                        id="adresse_quartier_entreprise"
+                        type="text"
+                        placeholder="Entrer le quartier"
+                        color={invalid ? 'failure' : undefined}
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="adresse_avenue"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label htmlFor="adresse_avenue_entreprise" value="Avenue" />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={isPending}
+                        id="adresse_avenue_entreprise"
+                        type="text"
+                        placeholder="Entrer l'avenue"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                        required
+                      />
+                    </div>
+                  )}
                 />
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="contact_email" value="Email" />
-                <TextInput id="contact_email" {...register('contact_email')} placeholder="Email" />
-              </div>
-            </div>
-          </div>
 
-          {/* Section Adresse */}
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Adresse</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="adresse_province" value="Province" />
-                <TextInput
-                  id="adresse_province"
-                  {...register('adresse_province')}
-                  placeholder="Province"
-                  required
+              <Controller
+                control={form.control}
+                name="adresse_numero"
+                render={({ field, fieldState: { invalid, error } }) => (
+                  <div>
+                    <div className="mb-2 block">
+                      <Label
+                        htmlFor="adresse_avenue_entreprise"
+                        value="Numéro parcelle"
+                        color={invalid ? 'failure' : undefined}
+                      />
+                    </div>
+                    <TextInput
+                      {...field}
+                      disabled={isPending}
+                      id="adresse_avenue_entreprise"
+                      color={invalid ? 'failure' : undefined}
+                      type="text"
+                      placeholder="Entrer le numero de la parcelle"
+                      helperText={
+                        invalid ? (
+                          <>
+                            <span className="font-medium">Oops!</span> {error ? error?.message : ''}
+                          </>
+                        ) : (
+                          <></>
+                        )
+                      }
+                    />
+                  </div>
+                )}
+              />
+              <div className="flex items-center gap-4 border-b border-gray-700 pb-2 text-5 font-semibold dark:text-slate-200">
+                <span>Identifiant système</span>
+                <HiLockClosed />
+              </div>
+              <div className="flex w-full flex-col items-center justify-between md:flex-row md:gap-4">
+                <Controller
+                  control={form.control}
+                  name="identifiant_systeme"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="identifiant_systeme"
+                          value="Nom utilisateur"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={true}
+                        id="identifiant_systeme"
+                        type="text"
+                        color={invalid ? 'failure' : undefined}
+                        placeholder="Entrer l'identifiant système"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  control={form.control}
+                  name="mot_de_passe_systeme"
+                  render={({ field, fieldState: { invalid, error } }) => (
+                    <div className="justify-cenetr flex  w-full flex-col ">
+                      <div className="mb-2 block">
+                        <Label
+                          htmlFor="mot_de_passe_systeme"
+                          value="Mot de passe système"
+                          color={invalid ? 'failure' : undefined}
+                        />
+                      </div>
+                      <TextInput
+                        {...field}
+                        disabled={true}
+                        color={invalid ? 'failure' : undefined}
+                        id="mot_de_passe_systeme"
+                        type="text"
+                        placeholder="Entrer le mot de passe système"
+                        helperText={
+                          invalid ? (
+                            <>
+                              <span className="font-medium">Oops!</span>{' '}
+                              {error ? error?.message : ''}
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
+                      />
+                    </div>
+                  )}
                 />
               </div>
-              <div>
-                <Label htmlFor="adresse_commune" value="Commune" />
-                <TextInput
-                  id="adresse_commune"
-                  {...register('adresse_commune')}
-                  placeholder="Commune"
-                  required
-                />
+              {errorMessage ? (
+                <Alert color="failure" onDismiss={() => setErrorMessage(undefined)}>
+                  <span className="font-medium">Erreur!</span> {errorMessage}
+                </Alert>
+              ) : (
+                ''
+              )}
+              <div className="flex  gap-2">
+                <Button disabled={isPending} type="submit">
+                  {isPending ? 'Enregistrement en cours' : 'Enregister et continuer'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setBackToPreviousPage(undefined)
+                  }}
+                  color="gray"
+                >
+                  Retourner à la page précedente
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="adresse_quartier" value="Quartier" />
-                <TextInput
-                  id="adresse_quartier"
-                  {...register('adresse_quartier')}
-                  placeholder="Quartier"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="adresse_avenue" value="Avenue" />
-                <TextInput
-                  id="adresse_avenue"
-                  {...register('adresse_avenue')}
-                  placeholder="Avenue"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="adresse_numero" value="Numéro" />
-                <TextInput
-                  id="adresse_numero"
-                  {...register('adresse_numero')}
-                  placeholder="Numéro"
-                />
-              </div>
-            </div>
+            </form>
+            <div>{JSON.stringify(form.getFieldState('taxes.0.est_pourcentage'))}</div>
           </div>
-
-          {/* Section Identifiants Système */}
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-slate-200">
-              Identifiants système
-            </h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="identifiant_systeme" value="Identifiant système" />
-                <TextInput
-                  id="identifiant_systeme"
-                  {...register('identifiant_systeme')}
-                  disabled
-                  placeholder="Identifiant système"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="mot_de_passe_systeme" value="Mot de passe système" />
-                <TextInput
-                  id="mot_de_passe_systeme"
-                  {...register('mot_de_passe_systeme')}
-                  disabled
-                  placeholder="Mot de passe système"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Boutons de Soumission */}
-          <div className="flex items-center gap-4 mt-6">
-            <Button disabled={isPending} type="submit">
-              {isPending ? 'Enregistrement en cours...' : 'Enregistrer et continuer'}
-            </Button>
-            <Button onClick={onBack} color="gray">
-              Retour
-            </Button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   )
 }
-
 export default NewSocietePage

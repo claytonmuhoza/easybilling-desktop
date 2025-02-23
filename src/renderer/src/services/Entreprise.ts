@@ -1,5 +1,4 @@
 // renderer/services/Entreprise.ts
-
 export interface EntrepriseData {
   id?: number
   nom: string
@@ -31,7 +30,6 @@ export interface TaxeData {
   valeur_non_pourcentage: number | null
   // Vous pouvez ajouter d'autres propriétés si nécessaire
 }
-
 export class Entreprise {
   id?: number
   nom: string
