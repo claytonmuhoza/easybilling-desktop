@@ -9,7 +9,7 @@ import { LienAPIService } from './services/LienApiService'
 import { useAuth } from './context/AuthContext'
 
 function App(): JSX.Element {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, logout, session } = useAuth()
   const [loading, setLoading] = useState(true)
   const [lienAPICount, setLienAPICount] = useState(0)
 
@@ -36,7 +36,7 @@ function App(): JSX.Element {
           <ChooseLink setCount={setLienAPICount} />
         ) : isAuthenticated ? (
           <div className="flex flex-col items-center justify-center">
-            <p>Authentifié</p>
+            <p>Authentifié Bienvenue {session?.user.nom}</p>
             <button
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
               onClick={() => logout()}

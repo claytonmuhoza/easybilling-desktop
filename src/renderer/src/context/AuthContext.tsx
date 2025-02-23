@@ -1,8 +1,9 @@
+import { User } from '@renderer/services/User'
 import userService, { userResponse } from '@renderer/services/UserServices'
 import React, { createContext, useState, useEffect, useContext } from 'react'
 
 interface LocalSession {
-  username: string
+  user: User
   loginDate: number // Timestamp en millisecondes
   expiresAt: number // Timestamp en millisecondes (par exemple, loginDate + 2 mois)
 }
@@ -52,11 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string
   }): Promise<userResponse> => {
     const responseLogin = await userService.authenticateUser({ username, password })
-    const isValid = responseLogin.success && responseLogin.user !== null
-    if (isValid) {
+    if (responseLogin.success && responseLogin.user !== null) {
       const now = Date.now()
       const newSession: LocalSession = {
-        username,
+        user: responseLogin.user,
         loginDate: now,
         expiresAt: now + TWO_MONTHS_MS
       }
