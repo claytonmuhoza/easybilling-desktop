@@ -7,7 +7,7 @@ import AuthLoading from './pages/Auth/AuthLoading'
 import CreateContribuable from './pages/Auth/CreateContribuable'
 import { LienAPIService } from './services/LienApiService'
 import { useAuth } from './context/AuthContext'
-import DashboardLayoutContent from './layout/DashboardLayout'
+import DashboardPage from './pages/Dashboard'
 
 function App(): JSX.Element {
   const { isAuthenticated } = useAuth()
@@ -36,9 +36,7 @@ function App(): JSX.Element {
         ) : lienAPICount === 0 ? (
           <ChooseLink setCount={setLienAPICount} />
         ) : isAuthenticated ? (
-          <DashboardLayoutContent>
-            <div>Hello clayton muhoza</div>
-          </DashboardLayoutContent>
+          <DashboardPage />
         ) : (
           <CreateContribuable />
         )}

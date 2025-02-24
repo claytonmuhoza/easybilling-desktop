@@ -7,7 +7,8 @@ import './ipc/ipcFacturation'
 import './ipc/ipcLienApi'
 import './ipc/ipcTaxe'
 import './ipc/ipcUser'
-
+import './ipc/ipcUniteMesure'
+import './ipc/ipcCategorie'
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 900,

@@ -49,7 +49,12 @@ declare global {
       lienApiCount: () => Promise<number>
       lienApiInsert: (lien: string) => Promise<boolean>
       lienApiGet: () => Promise<string>
-
+      uniteMesureCreate: (unite_mesure: UniteMesure) => Promise<boolean>
+      uniteMesureUpdate: (unite_mesure: UniteMesure) => Promise<boolean>
+      uniteMesuresAll: () => Promise<import('../services/UniteMesure').UniteMesure[]>
+      categorieCreate: (unite_mesure: Categorie) => Promise<boolean>
+      categorieUpdate: (unite_mesure: Categorie) => Promise<boolean>
+      categoriesAll: () => Promise<import('../services/Categorie').Categorie[]>
     }
   }
 }

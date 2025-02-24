@@ -16,16 +16,16 @@ import {
   HiViewList
 } from 'react-icons/hi'
 import { IoSettings } from 'react-icons/io5'
+import { useNavigate } from 'react-router-dom'
 
 export const DashboardSidebar: FC = function () {
   const { isCollapsed, setCollapsed } = useSidebarContext()
   const { logout } = useAuth()
   //   const router =
 
-  // const router = useRouter()
+  const navigate = useNavigate()
   const to = (link: string): void => {
-    // router.push(link)
-    console.log(link)
+    navigate(link)
     setCollapsed(isCollapsed)
   }
 
@@ -116,7 +116,7 @@ export const DashboardSidebar: FC = function () {
             <Sidebar.Item icon={HiDatabase} onClick={() => to('/categorie')}>
               <span className="cursor-pointer">Categories</span>
             </Sidebar.Item>
-            <Sidebar.Item icon={CiRuler} onClick={() => to('/unite')}>
+            <Sidebar.Item icon={CiRuler} onClick={() => to('/unite-mesure')}>
               <span className="cursor-pointer">Unites Mesure</span>
             </Sidebar.Item>
             <Sidebar.Item icon={HiViewList} onClick={() => to('/log_obr')}>

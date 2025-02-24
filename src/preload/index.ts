@@ -5,6 +5,8 @@ import type { Taxe, ValeurTaxe } from '../main/services/Taxe'
 import type { User } from '../main/services/User'
 import type { Entreprise } from '../main/services/Entreprise'
 import type { Produit } from '../main/services/Produit'
+import { UniteMesure } from '../main/services/UniteMesure'
+import { Categorie } from '../main/services/Categorie'
 
 interface IpcAPI {
   entrepriseInsert: (entrepriseData: Entreprise) => Promise<boolean>
@@ -45,6 +47,12 @@ interface IpcAPI {
   lienApiCount: () => Promise<number>
   lienApiInsert: (lien: string) => Promise<boolean>
   lienApiGet: () => Promise<string>
+  uniteMesureCreate: (unite_mesure: UniteMesure) => Promise<boolean>
+  uniteMesureUpdate: (unite_mesure: UniteMesure) => Promise<boolean>
+  uniteMesuresAll: () => Promise<UniteMesure[]>
+  categorieCreate: (categorie: Categorie) => Promise<boolean>
+  categorieUpdate: (categorie: Categorie) => Promise<boolean>
+  categoriesAll: () => Promise<Categorie[]>
 }
 
 const api: IpcAPI = {
@@ -78,7 +86,13 @@ const api: IpcAPI = {
   userCount: () => ipcRenderer.invoke('User:count'),
   lienApiCount: () => ipcRenderer.invoke('LienAPI:count'),
   lienApiInsert: (lien: string) => ipcRenderer.invoke('LienAPI:insert', lien),
-  lienApiGet: () => ipcRenderer.invoke('LienAPI:get')
+  lienApiGet: () => ipcRenderer.invoke('LienAPI:get'),
+  uniteMesureCreate: (unite_mesure) => ipcRenderer.invoke('UniteMesure:create', unite_mesure),
+  uniteMesureUpdate: (unite_mesure) => ipcRenderer.invoke('UniteMesure:update', unite_mesure),
+  uniteMesuresAll: () => ipcRenderer.invoke('UniteMesure:all'),
+  categorieCreate: (categorie) => ipcRenderer.invoke('categorie:create', categorie),
+  categorieUpdate: (categorie) => ipcRenderer.invoke('categorie:update', categorie),
+  categoriesAll: () => ipcRenderer.invoke('categorie:all')
 }
 
 contextBridge.exposeInMainWorld('api', api)
