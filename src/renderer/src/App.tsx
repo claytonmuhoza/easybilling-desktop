@@ -7,9 +7,10 @@ import AuthLoading from './pages/Auth/AuthLoading'
 import CreateContribuable from './pages/Auth/CreateContribuable'
 import { LienAPIService } from './services/LienApiService'
 import { useAuth } from './context/AuthContext'
+import DashboardLayoutContent from './layout/DashboardLayout'
 
 function App(): JSX.Element {
-  const { isAuthenticated, logout, session } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [loading, setLoading] = useState(true)
   const [lienAPICount, setLienAPICount] = useState(0)
 
@@ -35,15 +36,9 @@ function App(): JSX.Element {
         ) : lienAPICount === 0 ? (
           <ChooseLink setCount={setLienAPICount} />
         ) : isAuthenticated ? (
-          <div className="flex flex-col items-center justify-center">
-            <p>Authentifié Bienvenue {session?.user.nom}</p>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => logout()}
-            >
-              Se déconnecter
-            </button>
-          </div>
+          <DashboardLayoutContent>
+            <div>Hello clayton muhoza</div>
+          </DashboardLayoutContent>
         ) : (
           <CreateContribuable />
         )}
