@@ -1,5 +1,9 @@
 import { connectionToDatabase } from './Database'
-
+import { Entreprise } from './Entreprise'
+export interface ClientResponse {
+  success: boolean
+  msg: string
+}
 export interface ClientData {
   id?: number
   nom: string
@@ -68,7 +72,16 @@ export class Client {
     this.updateAt = data.updateAt
   }
 
-  static insertClient(client: Client): boolean {
+  static async insertClient(client: Client, entreprise_id: number): Promise<ClientResponse> {
+    if (client.NIF && client.NIF !== '') {
+      const checkNIF = await Entreprise.checkNIF(client.NIF, entreprise_id)
+      if (!checkNIF.success) {
+        return { success: false, msg: checkNIF.msg }
+      }
+      client.nom = checkNIF.result?.taxpayer[0].tp_name
+        ? checkNIF.result.taxpayer[0].tp_name
+        : client.nom
+    }
     const db = connectionToDatabase()
     try {
       const stmt = db.prepare(`
@@ -97,10 +110,14 @@ export class Client {
         client.activer ? 1 : 0,
         client.entreprise_id || null
       )
-      return result.changes > 0
+      return {
+        success: result.changes > 0,
+        msg:
+          result.changes > 0 ? 'Client ajouté avec succès' : "Erreur lors de l'insertion du client"
+      }
     } catch (error) {
       console.error("Erreur lors de l'insertion du client:", error)
-      return false
+      return { success: false, msg: "Erreur lors de l'insertion du client" }
     }
   }
 
@@ -112,7 +129,7 @@ export class Client {
 
   static getAllClients(): Client[] {
     const db = connectionToDatabase()
-    const rows = db.prepare('SELECT * FROM client').all()
+    const rows = db.prepare('SELECT * FROM client order by id desc').all()
     return rows.map((row) => new Client(row as ClientData))
   }
 
@@ -164,6 +181,7 @@ export class Client {
         client.entreprise_id || null,
         client.id
       )
+      console.log('result', result)
       return result.changes > 0
     } catch (error) {
       console.error('Erreur lors de la mise à jour du client:', error)

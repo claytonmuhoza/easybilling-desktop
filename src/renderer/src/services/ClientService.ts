@@ -1,12 +1,12 @@
 import type { Client, ClientData, ClientResponse } from './Client'
 
 export const clientService = {
-  createClient: async (clientData: ClientData): Promise<ClientResponse> => {
+  createClient: async (clientData: ClientData, entreprise_id): Promise<ClientResponse> => {
     try {
-      const response = await window.api.clientInsert(clientData)
+      const response = await window.api.clientInsert(clientData, entreprise_id)
       return {
-        success: response,
-        msg: response ? 'Client créé' : 'Erreur lors de la création du client'
+        success: response.success,
+        msg: response.msg
       }
     } catch (error) {
       console.error('Erreur lors de la création du client', error)

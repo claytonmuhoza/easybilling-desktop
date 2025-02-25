@@ -1,11 +1,11 @@
-import { get_client_action } from '@/actions/client_action'
 import { useClientContext } from '@renderer/context/ClientContext'
-import { Client } from '@prisma/client'
+import { Client } from '@renderer/services/Client'
 import { Spinner, Table } from 'flowbite-react'
 import { useEffect, useState } from 'react'
 import { HiPencil } from 'react-icons/hi'
 import { BtnBack, BtnCreate, BtnRefresh, SearchBar } from '@renderer/components/Utils'
-import ClientModal from './CreateClient'
+import ClientModal from './ClientModal'
+import clientService from '@renderer/services/ClientService'
 
 interface ClientListProps {
   minimal: boolean
@@ -28,7 +28,8 @@ export default function ClientsList({ minimal = false, getClient }: ClientListPr
   const orderbyName = alphabetic ? true : minimal
   useEffect(() => {
     setLoading(true)
-    get_client_action(searchWord, orderbyName)
+    clientService
+      .getAllClients()
       .then((data) => {
         setData(data)
         setLoading(false)

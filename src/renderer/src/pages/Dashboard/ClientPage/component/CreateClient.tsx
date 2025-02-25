@@ -6,8 +6,10 @@ import { useState, useTransition } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import clientService from '@renderer/services/ClientService'
+import { useAuth } from '@renderer/context/AuthContext'
 export default function CreateClient(): JSX.Element {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setPending] = useState(false)
+  const [isSent, startTransition] = useTransition()
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
   const form = useForm<z.infer<typeof ClientShema>>({
@@ -27,23 +29,29 @@ export default function CreateClient(): JSX.Element {
     }
   })
   const { closeModal, setAlphabetic } = useClientContext()
+  const { session } = useAuth()
   const submit = (values: z.infer<typeof ClientShema>): void => {
+    console.log(isSent)
+    setPending(true)
     setError(undefined)
     setSuccess(undefined)
     startTransition(() => {
       clientService
-        .createClient({
-          nom: values.nom_entreprise_client,
-          NIF: values.nif_entreprise_client,
-          type_personne: values.type_client,
-          isLocalClient: values.localisation_client === 'local',
-          assujetti_tva: values.assujetti_tva_client,
-          client_telephone: values.numero_telephone_client,
-          client_mail: values.adresse_mail_client,
-          client_boite_postal: values.boite_postal_client,
-          secteur_activite: values.secteur_activite_client,
-          personne_contact_nom: values.personne_contact_client
-        })
+        .createClient(
+          {
+            nom: values.nom_entreprise_client,
+            NIF: values.nif_entreprise_client,
+            type_personne: values.type_client,
+            isLocalClient: values.localisation_client === 'local',
+            assujetti_tva: values.assujetti_tva_client,
+            client_telephone: values.numero_telephone_client,
+            client_mail: values.adresse_mail_client,
+            client_boite_postal: values.boite_postal_client,
+            secteur_activite: values.secteur_activite_client,
+            personne_contact_nom: values.personne_contact_client
+          },
+          session?.user?.entreprise_id
+        )
         .then((data) => {
           if (!data.success) {
             setError(data.msg)
@@ -53,6 +61,9 @@ export default function CreateClient(): JSX.Element {
             closeModal()
             setAlphabetic(false)
           }
+        })
+        .finally(() => {
+          setPending(false)
         })
     })
   }

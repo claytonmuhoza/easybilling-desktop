@@ -2,9 +2,9 @@ import { ipcMain } from 'electron'
 import { Client } from '../services/Client'
 
 // Insérer un nouveau client
-ipcMain.handle('Client:insert', async (_event, clientData) => {
+ipcMain.handle('Client:insert', async (_event, clientData, entreprise_id) => {
   const client = new Client(clientData)
-  return Client.insertClient(client)
+  return Client.insertClient(client, entreprise_id)
 })
 
 // Récupérer un client par son ID

@@ -9,6 +9,7 @@ import './ipc/ipcTaxe'
 import './ipc/ipcUser'
 import './ipc/ipcUniteMesure'
 import './ipc/ipcCategorie'
+import './ipc/ipcClient'
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 900,

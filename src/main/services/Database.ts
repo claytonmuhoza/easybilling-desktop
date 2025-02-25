@@ -188,6 +188,29 @@ export function connectionToDatabase(): Database {
         insertValeurTaxeConsommationStmt.run(taxeConsommationId, valeur)
       }
     }
+    //insertion des categories de produits par défaut
+    //on commence par vérifier si la table est vide
+    const countCategorie = db.prepare('SELECT COUNT(*) as count FROM categorie_produit')
+    const countCategorieRow = countCategorie.get()
+    if (countCategorieRow.count === 0) {
+      const insertCategorieStmt = db.prepare(`
+      INSERT OR IGNORE INTO categorie_produit (libelle)
+      VALUES (?)
+    `)
+      insertCategorieStmt.run('bien')
+      insertCategorieStmt.run('service')
+    }
+    //insertion des unités de mesure par défaut
+    //on commence par vérifier si la table est vide
+    const countUnite = db.prepare('SELECT COUNT(*) as count FROM unite_mesure')
+    const countUniteRow = countUnite.get()
+    if (countUniteRow.count === 0) {
+      const insertUniteStmt = db.prepare(`
+      INSERT OR IGNORE INTO unite_mesure (libelle)
+      VALUES (?)
+    `)
+      insertUniteStmt.run('pièce')
+    }
   }
 
   console.log('Database initialized')

@@ -9,7 +9,8 @@ import { z } from 'zod'
 import clientService from '@renderer/services/ClientService'
 export default function EditClient({ client }: { client: Client }): JSX.Element {
   const { closeModal } = useClientContext()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setPending] = useState(false)
+  const [isSent, startTransition] = useTransition()
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
   const form = useForm<z.infer<typeof ClientShema>>({
@@ -26,10 +27,12 @@ export default function EditClient({ client }: { client: Client }): JSX.Element 
       personne_contact_client: client.personne_contact_telephone,
       contact_personne_contact_client: client.personne_contact_nom,
       localisation_client: client.isLocalClient ? 'local' : 'etranger',
-      assujetti_tva_client: client.assujetti_tva
+      assujetti_tva_client: client.assujetti_tva ? true : false
     }
   })
   const submit = (values: z.infer<typeof ClientShema>): void => {
+    console.log(isSent)
+    setPending(true)
     setError(undefined)
     setSuccess(undefined)
     startTransition(() => {
@@ -55,6 +58,9 @@ export default function EditClient({ client }: { client: Client }): JSX.Element 
             setSuccess('Le client a été modifier avec succès')
             closeModal()
           }
+        })
+        .finally(() => {
+          setPending(false)
         })
     })
   }

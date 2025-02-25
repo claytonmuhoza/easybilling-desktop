@@ -6,13 +6,11 @@ export type apiLoginResponseType = {
   result?: { token: string }
 }
 
-export type checkNIFResponseType =
-  | {
-      success: boolean
-      msg: string
-      result: { taxpayer: [{ tp_name: string }] }
-    }
-  | { success: false; msg: string }
+export type checkNIFResponseType = {
+  success: boolean
+  msg: string
+  result?: { taxpayer: [{ tp_name: string }] }
+}
 
 export class ApiObr {
   private url: string
@@ -24,7 +22,6 @@ export class ApiObr {
     this.username = id_systeme
     this.password = password_systeme
   }
-
   // Récupération du token d'authentification
   async getToken(): Promise<apiLoginResponseType> {
     try {
@@ -43,7 +40,7 @@ export class ApiObr {
   async checkNIF(nif: string): Promise<checkNIFResponseType> {
     const tokenResponse = await this.getToken()
     if (!tokenResponse.success || !tokenResponse.result?.token) {
-      return { success: false, msg: "Impossible d'obtenir le token d'authentification." }
+      return { success: false, msg: tokenResponse.msg }
     }
 
     try {
@@ -65,7 +62,10 @@ export class ApiObr {
   async getInvoice(identifiantFacture: string): Promise<apiLoginResponseType> {
     const tokenResponse = await this.getToken()
     if (!tokenResponse.success || !tokenResponse.result?.token) {
-      return { success: false, msg: "Impossible d'obtenir le token d'authentification." }
+      return {
+        success: false,
+        msg: "Impossible de vous connectez au service de l'OBR, vérifier votre connexion internet"
+      }
     }
 
     try {

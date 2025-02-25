@@ -1,4 +1,4 @@
-import { apiLoginResponseType, ApiObr } from './ApiObr'
+import { apiLoginResponseType, ApiObr, checkNIFResponseType } from './ApiObr'
 import { connectionToDatabase } from './Database'
 import { Taxe } from './Taxe'
 
@@ -104,6 +104,11 @@ export class Entreprise {
     const row = db.prepare('SELECT * FROM entreprise WHERE nif = ?').get(nif)
     return row ? new Entreprise(row as Entreprise) : null
   }
+  static getEntrepriseById(id: number): Entreprise | null {
+    const db = connectionToDatabase()
+    const row = db.prepare('SELECT * FROM entreprise WHERE id = ?').get(id)
+    return row ? new Entreprise(row as Entreprise) : null
+  }
 
   static getAllEntreprises(): Entreprise[] {
     const db = connectionToDatabase()
@@ -142,5 +147,18 @@ export class Entreprise {
     password_systeme: string
   }): Promise<apiLoginResponseType> {
     return await new ApiObr({ id_systeme, password_systeme }).getToken()
+  }
+  static async checkNIF(nif: string, entreprise_id: number): Promise<checkNIFResponseType> {
+    const entreprise = Entreprise.getEntrepriseById(entreprise_id)
+    if (!entreprise) {
+      return {
+        success: false,
+        msg: "Une erreur s'est produit. Veuillez vous déconnectez d'application puis reconnecter vous."
+      }
+    }
+    return await new ApiObr({
+      id_systeme: entreprise.identifiant_systeme,
+      password_systeme: entreprise.mot_de_passe_systeme
+    }).checkNIF(nif)
   }
 }

@@ -8,6 +8,7 @@ import { SidebarProvider } from './context/SideBarContext'
 import { UniteMesureProvider } from './context/UniteMesureContext'
 import { BrowserRouter } from 'react-router-dom'
 import { CategorieProvider } from './context/CategorieContext'
+import { ClientProvider } from './context/ClientContext'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -16,7 +17,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <SidebarProvider>
           <UniteMesureProvider>
             <CategorieProvider>
+              <ClientProvider>
               <App />
+              </ClientProvider>
             </CategorieProvider>
           </UniteMesureProvider>
         </SidebarProvider>

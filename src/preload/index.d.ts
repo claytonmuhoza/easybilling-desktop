@@ -55,7 +55,10 @@ declare global {
       categorieCreate: (unite_mesure: Categorie) => Promise<boolean>
       categorieUpdate: (unite_mesure: Categorie) => Promise<boolean>
       categoriesAll: () => Promise<import('../services/Categorie').Categorie[]>
-      clientInsert: (clientData: Client) => Promise<boolean>
+      clientInsert: (
+        clientData: Client,
+        entreprise_id: number
+      ) => Promise<import('../services/Client').ClientResponse>
       clientGetById: (id: number) => Promise<import('../services/Client').Client>
       clientGetAll: () => Promise<import('../services/Client').Client[]>
       clientUpdate: (clientData: Client) => Promise<boolean>
