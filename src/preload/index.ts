@@ -99,7 +99,8 @@ const api: IpcAPI = {
   categorieCreate: (categorie) => ipcRenderer.invoke('categorie:create', categorie),
   categorieUpdate: (categorie) => ipcRenderer.invoke('categorie:update', categorie),
   categoriesAll: () => ipcRenderer.invoke('categorie:all'),
-  clientInsert: (clientData, entreprise_id) => ipcRenderer.invoke('Client:insert', clientData, entreprise_id),
+  clientInsert: (clientData, entreprise_id) =>
+    ipcRenderer.invoke('Client:insert', clientData, entreprise_id),
   clientGetById: (id: number) => ipcRenderer.invoke('Client:getById', id),
   clientGetAll: () => ipcRenderer.invoke('Client:getAll'),
   clientUpdate: (clientData) => ipcRenderer.invoke('Client:update', clientData),
