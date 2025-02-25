@@ -97,9 +97,25 @@ export function connectionToDatabase(): Database {
     CREATE TABLE IF NOT EXISTS client (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nom TEXT NOT NULL,
-      nif TEXT UNIQUE,
-      adresse TEXT,
-      telephone TEXT
+      NIF TEXT,
+      type_personne TEXT,
+      isLocalClient BOOLEAN DEFAULT 1,
+      assujetti_tva BOOLEAN DEFAULT 0,
+      assujetti_tc BOOLEAN DEFAULT 0,
+      assujetti_pf BOOLEAN DEFAULT 0,
+      client_local BOOLEAN DEFAULT 1,
+      client_telephone TEXT DEFAULT '',
+      client_mail TEXT DEFAULT '',
+      client_boite_postal TEXT DEFAULT '',
+      secteur_activite TEXT DEFAULT '',
+      personne_contact_nom TEXT DEFAULT '',
+      personne_contact_telephone TEXT DEFAULT '',
+      adresse TEXT DEFAULT '',
+      activer BOOLEAN DEFAULT 1,
+      createAt TEXT DEFAULT (datetime('now')),
+      updateAt TEXT DEFAULT (datetime('now')),
+      entreprise_id INTEGER,
+      FOREIGN KEY (entreprise_id) REFERENCES entreprise(id)
     );
     CREATE TABLE IF NOT EXISTS facture (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

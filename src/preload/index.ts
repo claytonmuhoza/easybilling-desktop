@@ -7,6 +7,7 @@ import type { Entreprise } from '../main/services/Entreprise'
 import type { Produit } from '../main/services/Produit'
 import { UniteMesure } from '../main/services/UniteMesure'
 import { Categorie } from '../main/services/Categorie'
+import { Client } from '../main/services/Client'
 
 interface IpcAPI {
   entrepriseInsert: (entrepriseData: Entreprise) => Promise<boolean>
@@ -53,6 +54,11 @@ interface IpcAPI {
   categorieCreate: (categorie: Categorie) => Promise<boolean>
   categorieUpdate: (categorie: Categorie) => Promise<boolean>
   categoriesAll: () => Promise<Categorie[]>
+  clientInsert: (clientData: Client) => Promise<boolean>
+  clientGetById: (id: number) => Promise<Client>
+  clientGetAll: () => Promise<Client[]>
+  clientUpdate: (clientData: Client) => Promise<boolean>
+  clientDelete: (id: number) => Promise<boolean>
 }
 
 const api: IpcAPI = {
@@ -92,7 +98,12 @@ const api: IpcAPI = {
   uniteMesuresAll: () => ipcRenderer.invoke('UniteMesure:all'),
   categorieCreate: (categorie) => ipcRenderer.invoke('categorie:create', categorie),
   categorieUpdate: (categorie) => ipcRenderer.invoke('categorie:update', categorie),
-  categoriesAll: () => ipcRenderer.invoke('categorie:all')
+  categoriesAll: () => ipcRenderer.invoke('categorie:all'),
+  clientInsert: (clientData) => ipcRenderer.invoke('Client:insert', clientData),
+  clientGetById: (id: number) => ipcRenderer.invoke('Client:getById', id),
+  clientGetAll: () => ipcRenderer.invoke('Client:getAll'),
+  clientUpdate: (clientData) => ipcRenderer.invoke('Client:update', clientData),
+  clientDelete: (id: number) => ipcRenderer.invoke('Client:delete', id)
 }
 
 contextBridge.exposeInMainWorld('api', api)
