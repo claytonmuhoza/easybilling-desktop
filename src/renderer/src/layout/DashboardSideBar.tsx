@@ -71,7 +71,7 @@ export const DashboardSidebar: FC = function () {
             <span className="cursor-pointer">Clients</span>
           </Sidebar.Item>
           <Sidebar.Item onClick={() => to('/produits')} icon={HiPaperClip}>
-            <span className="cursor-pointer">Articles</span>
+            <span className="cursor-pointer">Produits</span>
           </Sidebar.Item>
           <Sidebar.Collapse icon={HiInbox} label="Stock">
             <Sidebar.Item onClick={() => to('/entree')}>
@@ -104,9 +104,9 @@ export const DashboardSidebar: FC = function () {
         </Sidebar.ItemGroup>
         <Sidebar.ItemGroup>
           <Sidebar.Collapse icon={IoSettings} label="Configurations">
-            <Sidebar.Item icon={CiBank} onClick={() => to('/banques')}>
+            {/* <Sidebar.Item icon={CiBank} onClick={() => to('/banques')}>
               <span className="cursor-pointer">Banques</span>
-            </Sidebar.Item>
+            </Sidebar.Item> */}
             {/*<Sidebar.Item
                      icon={PiSignatureBold}
                      onClick={() => to('/signataires')}
