@@ -2,7 +2,7 @@
 import { useAuth } from '@renderer/context/AuthContext'
 import { useSidebarContext } from '@renderer/context/SideBarContext'
 import { Sidebar } from 'flowbite-react'
-import type { FC } from 'react'
+import { type FC } from 'react'
 import { CiRuler } from 'react-icons/ci'
 import {
   HiChartPie,
@@ -28,7 +28,6 @@ export const DashboardSidebar: FC = function () {
     navigate(link)
     setCollapsed(isCollapsed)
   }
-
   return (
     <Sidebar
       aria-label="Sidebar with multi-level dropdown example"

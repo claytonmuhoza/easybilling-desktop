@@ -1,18 +1,24 @@
-import { Badge, Button, Card } from "flowbite-react";
+import { Badge, Button, Card, Kbd } from 'flowbite-react'
 
 export default function FactureItemList(): JSX.Element {
   return (
     <Card className="m-3">
       <div className="flex justify-between no-wrap">
-        <div>Nom: Nom de l&apos;entreprise</div>
+        <div>Facture numéro: FN-01/10/2024</div>
         <div>
           <Badge color="warning">En attente</Badge>
         </div>
       </div>
 
-      <div>NIF</div>
       <div>
-        <div>THVA 50000 | TVA 30000 | TC 20000 | PFL 2000</div>
+        <div>Nom</div>
+        <div>NIF: 100100045</div>
+      </div>
+
+      <div>
+        <div className="flex gap-4">
+          <Kbd>THVA 50000</Kbd> <Kbd>TVA 30000 </Kbd> <Kbd>TC 20000</Kbd> <Kbd>PFL 2000</Kbd>{' '}
+        </div>
         <div>
           Total <span>500000</span>
         </div>

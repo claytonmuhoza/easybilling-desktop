@@ -12,6 +12,7 @@ export default function UniteMesureModal(): JSX.Element {
       size={'3xl'}
       onClose={closeModal}
       show={uniteMesureModalState}
+      position="center"
       popup
       className="max-h-screen bg-dark"
     >

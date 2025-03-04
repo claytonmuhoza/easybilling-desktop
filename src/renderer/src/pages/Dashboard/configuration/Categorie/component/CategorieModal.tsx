@@ -10,6 +10,7 @@ export default function CategorieModal(): JSX.Element {
     <Modal
       size={'3xl'}
       onClose={closeModal}
+      position="center"
       show={categorieModalState}
       popup
       className="max-h-screen bg-dark"
