@@ -3,7 +3,7 @@ import { Client } from '@renderer/services/Client'
 import { Spinner, Table } from 'flowbite-react'
 import { useEffect, useState } from 'react'
 import { HiPencil } from 'react-icons/hi'
-import { BtnBack, BtnCreate, BtnRefresh, SearchBar } from '@renderer/components/Utils'
+import { BtnCreate, BtnRefresh, SearchBar } from '@renderer/components/Utils'
 import ClientModal from './ClientModal'
 import clientService from '@renderer/services/ClientService'
 
@@ -44,7 +44,6 @@ export default function ClientsList({ minimal = false, getClient }: ClientListPr
       <div className="justify- flex flex-col items-center gap-2 rounded bg-white p-2 dark:bg-gray-800 sm:flex-row  sm:gap-4 ">
         <div className="justify- flex flex-row items-center gap-2 sm:gap-4 sm-max:w-full">
           <>
-            {!minimal && <BtnBack />}
             <BtnRefresh />
             <BtnCreate name="Nouveau Client" onClick={() => openModal('create')} />
           </>

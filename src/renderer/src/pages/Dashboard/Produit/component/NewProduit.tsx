@@ -45,7 +45,14 @@ const NewArticle: React.FC = () => {
     console.log(setTransition)
     startTransition(() => {
       produitService
-        .insertProduit(values)
+        .insertProduit({
+          nom: values.nom,
+          categorie_id: values.categorie_id,
+          unite_mesure_id: values.unite_mesure_id,
+          prix_htva: values.prix_vente,
+          taxe_conso_id: values.unite_mesure_id,
+          taxe_service_id: values.unite_mesure_id
+        })
         .then((res) => {
           if (res) {
             setSuccessAction('Produit ajouté avec succès')
@@ -135,7 +142,7 @@ const NewArticle: React.FC = () => {
         <div>
           <Label htmlFor="categorie_id" value="Catégorie" />
           <Select id="categorie_id" {...register('categorie_id')} required>
-            <option value="">Sélectionner une catégorie</option>
+            <option disabled>Sélectionner une catégorie</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.libelle}
@@ -146,7 +153,7 @@ const NewArticle: React.FC = () => {
         <div>
           <Label htmlFor="unite_mesure_id" value="Unité de mesure" />
           <Select id="unite_mesure_id" {...register('unite_mesure_id')} required>
-            <option value="">Sélectionner une unité de mesure</option>
+            <option disabled>Sélectionner une unité de mesure</option>
             {unites.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.libelle}

@@ -46,7 +46,7 @@ export class Taxe {
 
   static getAllTaxes(): Taxe[] {
     const db = connectionToDatabase()
-    const rows = db.prepare('SELECT * FROM taxe').all()
+    const rows = db.prepare('SELECT * FROM taxe group by nom').all()
     return rows.map((row) => new Taxe(row as Taxe))
   }
 
@@ -99,6 +99,7 @@ export class ValeurTaxe {
     this.id_taxe = id_taxe
     this.valeur = valeur
   }
+  
 
   static insertValeurTaxe(valeurTaxe: ValeurTaxe): boolean {
     try {

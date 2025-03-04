@@ -3,7 +3,7 @@ import { useAuth } from '@renderer/context/AuthContext'
 import { useSidebarContext } from '@renderer/context/SideBarContext'
 import { Sidebar } from 'flowbite-react'
 import type { FC } from 'react'
-import { CiBank, CiRuler } from 'react-icons/ci'
+import { CiRuler } from 'react-icons/ci'
 import {
   HiChartPie,
   HiClipboardList,
@@ -40,7 +40,7 @@ export const DashboardSidebar: FC = function () {
     >
       <Sidebar.Items>
         <Sidebar.ItemGroup>
-          <Sidebar.Item onClick={() => to('/home')} icon={HiChartPie}>
+          <Sidebar.Item onClick={() => to('/')} icon={HiChartPie}>
             <span className="cursor-pointer">Dashboard</span>
           </Sidebar.Item>
           <Sidebar.Collapse
