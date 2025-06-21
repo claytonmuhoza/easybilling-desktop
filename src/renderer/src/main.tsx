@@ -9,6 +9,7 @@ import { UniteMesureProvider } from './context/UniteMesureContext'
 import { BrowserRouter } from 'react-router-dom'
 import { CategorieProvider } from './context/CategorieContext'
 import { ClientProvider } from './context/ClientContext'
+import { ProductProvider } from './context/ProductContext'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <UniteMesureProvider>
             <CategorieProvider>
               <ClientProvider>
-              <App />
+                <ProductProvider>
+                  <App />
+                </ProductProvider>
               </ClientProvider>
             </CategorieProvider>
           </UniteMesureProvider>

@@ -80,13 +80,13 @@ export default function CreateClient(): JSX.Element {
       {/* <HiUser className="material-icons-round text-24 font-medium text-dark dark:text-primary md:text-24" /> */}
       <div className="flex w-full flex-col gap-2 sm:gap-3">
         <div className="items-cen flex flex-col gap-4 md:flex-row">
-          <Controller
+        <Controller
             control={form.control}
-            name="nif_entreprise_client"
+            name="nom_entreprise_client"
             render={({ field, fieldState: { invalid, error } }) => (
               <div className="justify-cent flex w-full flex-col items-center gap-1">
                 <Label className="w-full" htmlFor="remember">
-                  NIF du Client
+                  Nom de l&apos;entreprise ou de la personne physique
                 </Label>
                 <TextInput
                   disabled={isPending}
@@ -95,6 +95,7 @@ export default function CreateClient(): JSX.Element {
                   color={invalid ? 'failure' : undefined}
                   id="nif"
                   type="text"
+                  placeholder="nom du client"
                   helperText={
                     invalid ? (
                       <>
@@ -104,8 +105,7 @@ export default function CreateClient(): JSX.Element {
                       ''
                     )
                   }
-                  autoComplete="off"
-                  placeholder="NIF du Client"
+                  required
                 />
               </div>
             )}
@@ -143,13 +143,13 @@ export default function CreateClient(): JSX.Element {
         </div>
 
         <div className="items-cen flex flex-col gap-4 md:flex-row">
-          <Controller
+        <Controller
             control={form.control}
-            name="nom_entreprise_client"
+            name="nif_entreprise_client"
             render={({ field, fieldState: { invalid, error } }) => (
               <div className="justify-cent flex w-full flex-col items-center gap-1">
                 <Label className="w-full" htmlFor="remember">
-                  Nom de l&apos;entreprise ou de la personne physique
+                  NIF du Client
                 </Label>
                 <TextInput
                   disabled={isPending}
@@ -158,7 +158,6 @@ export default function CreateClient(): JSX.Element {
                   color={invalid ? 'failure' : undefined}
                   id="nif"
                   type="text"
-                  placeholder="nom du client"
                   helperText={
                     invalid ? (
                       <>
@@ -168,7 +167,8 @@ export default function CreateClient(): JSX.Element {
                       ''
                     )
                   }
-                  required
+                  autoComplete="off"
+                  placeholder="NIF du Client"
                 />
               </div>
             )}

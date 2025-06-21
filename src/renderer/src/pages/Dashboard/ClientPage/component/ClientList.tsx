@@ -1,6 +1,6 @@
 import { useClientContext } from '@renderer/context/ClientContext'
 import { Client } from '@renderer/services/Client'
-import { Spinner, Table } from 'flowbite-react'
+import { Pagination, Spinner, Table } from 'flowbite-react'
 import { useEffect, useState } from 'react'
 import { HiPencil } from 'react-icons/hi'
 import { BtnCreate, BtnRefresh, SearchBar } from '@renderer/components/Utils'
@@ -13,6 +13,11 @@ interface ClientListProps {
 }
 
 export default function ClientsList({ minimal = false, getClient }: ClientListProps): JSX.Element {
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const [totalClients, setTotalClients] = useState(0)
+  const totalPages = Math.ceil(totalClients / pageSize)
+
   const [error] = useState(false)
   const [searchWord, setSearchWord] = useState('')
   const [isLoading, setLoading] = useState(true)
@@ -26,10 +31,12 @@ export default function ClientsList({ minimal = false, getClient }: ClientListPr
   }
 
   const orderbyName = alphabetic ? true : minimal
+  
   useEffect(() => {
     setLoading(true)
+    clientService.total().then((total) => setTotalClients(total))
     clientService
-      .getAllClients()
+      .getAllClientsPagine(page)
       .then((data) => {
         setData(data)
         setLoading(false)
@@ -38,7 +45,7 @@ export default function ClientsList({ minimal = false, getClient }: ClientListPr
         setLoading(false)
         console.log(e)
       })
-  }, [openModal, searchWord, minimal, orderbyName])
+  }, [page,openModal, searchWord, minimal, orderbyName])
   return (
     <div className="flex w-full flex-col gap-4 p-4">
       <div className="justify- flex flex-col items-center gap-2 rounded bg-white p-2 dark:bg-gray-800 sm:flex-row  sm:gap-4 ">
@@ -160,6 +167,11 @@ export default function ClientsList({ minimal = false, getClient }: ClientListPr
             )}
           </Table.Body>
         </Table>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(page) => setPage(page)}
+        ></Pagination>
       </div>
       {clientModalState === true && <ClientModal />}
     </div>

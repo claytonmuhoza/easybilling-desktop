@@ -40,7 +40,7 @@ export const DashboardSidebar: FC = function () {
       <Sidebar.Items>
         <Sidebar.ItemGroup>
           <Sidebar.Item onClick={() => to('/')} icon={HiChartPie}>
-            <span className="cursor-pointer">Dashboard</span>
+            <span className="cursor-pointer">Facturation</span>
           </Sidebar.Item>
           <Sidebar.Collapse
             // onClick={() => setCollapsed(!isCollapsed)}\

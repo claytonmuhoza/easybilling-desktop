@@ -32,13 +32,24 @@ export const clientService = {
       return []
     }
   },
-  updateClient: async (clientData: ClientData): Promise<ClientResponse> => {
+  getAllClientsPagine: async (page: number): Promise<Client[]> => {
     try {
-      const response = await window.api.clientUpdate(clientData)
-      return {
-        success: response,
-        msg: response ? 'Client modifié' : 'Erreur lors de la modification du client'
-      }
+      return await window.api.clientGetAllPaginate(page)
+    } catch (error) {
+      throw 'Erreur lors de la récupération de tous les clients' + error
+    }
+  },
+  total: async (): Promise<number> => {
+    try {
+      return await window.api.clientCount()
+    } catch (error) {
+      throw 'Erreur lors de la récupération du nombre des clients' + error
+    }
+  },
+  updateClient: async (clientData: ClientData, entreprise_id): Promise<ClientResponse> => {
+    try {
+      const response = await window.api.clientUpdate(clientData, entreprise_id)
+      return response
     } catch (error) {
       console.error('Erreur lors de la mise à jour du client', error)
       return {

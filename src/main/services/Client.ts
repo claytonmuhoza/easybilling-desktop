@@ -132,11 +132,31 @@ export class Client {
     const rows = db.prepare('SELECT * FROM client order by id desc').all()
     return rows.map((row) => new Client(row as ClientData))
   }
+  static getClientsPagines(page: number): Client[] {
+    const pageSize = 20
+    const db = connectionToDatabase()
+    const offset = (page - 1) * pageSize
+    const rows = db.prepare('SELECT * FROM client LIMIT ? OFFSET ?').all(pageSize, offset)
+    return rows.map((row) => new Client(row as Client))
+  }
+  static countClients(): number {
+    const db = connectionToDatabase()
+    const result = db.prepare('SELECT COUNT(*) as total FROM client').get()
+    return result.total
+  }
 
-  static updateClient(client: Client): boolean {
+  static async updateClient(client: Client, entreprise_id): Promise<ClientResponse> {
     if (!client.id) {
-      console.error('ID du client manquant pour la mise à jour')
-      return false
+      return { success: false, msg: 'ID du client manquant pour la mise à jour' }
+    }
+    if (client.NIF && client.NIF !== '') {
+      const checkNIF = await Entreprise.checkNIF(client.NIF, entreprise_id)
+      if (!checkNIF.success) {
+        return { success: false, msg: checkNIF.msg }
+      }
+      client.nom = checkNIF.result?.taxpayer[0].tp_name
+        ? checkNIF.result.taxpayer[0].tp_name
+        : client.nom
     }
     const db = connectionToDatabase()
     try {
@@ -161,7 +181,7 @@ export class Client {
           entreprise_id = ?
         WHERE id = ?
       `)
-      const result = stmt.run(
+      stmt.run(
         client.nom,
         client.NIF,
         client.type_personne,
@@ -181,11 +201,9 @@ export class Client {
         client.entreprise_id || null,
         client.id
       )
-      console.log('result', result)
-      return result.changes > 0
+      return { success: true, msg: 'Les données ont été mise à jours avec succès' }
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du client:', error)
-      return false
+      return { success: false, msg: 'Erreur lors de la mise à jour du client:' + error }
     }
   }
 

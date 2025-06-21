@@ -57,8 +57,10 @@ interface IpcAPI {
   clientInsert: (clientData: Client, entreprise_id: number) => Promise<ClientResponse>
   clientGetById: (id: number) => Promise<Client>
   clientGetAll: () => Promise<Client[]>
-  clientUpdate: (clientData: Client) => Promise<boolean>
+  clientUpdate: (clientData: Client, entreprise_id: number) => Promise<ClientResponse>
   clientDelete: (id: number) => Promise<boolean>
+  clientGetAllPaginate: (page: number) => Promise<Client[]>
+  clientCount: () => Promise<number>
 }
 
 const api: IpcAPI = {
@@ -103,8 +105,11 @@ const api: IpcAPI = {
     ipcRenderer.invoke('Client:insert', clientData, entreprise_id),
   clientGetById: (id: number) => ipcRenderer.invoke('Client:getById', id),
   clientGetAll: () => ipcRenderer.invoke('Client:getAll'),
-  clientUpdate: (clientData) => ipcRenderer.invoke('Client:update', clientData),
-  clientDelete: (id: number) => ipcRenderer.invoke('Client:delete', id)
+  clientUpdate: (clientData, entreprise_id) =>
+    ipcRenderer.invoke('Client:update', clientData, entreprise_id),
+  clientDelete: (id: number) => ipcRenderer.invoke('Client:delete', id),
+  clientGetAllPaginate: (page: number) => ipcRenderer.invoke('Client:getAllPagines', page),
+  clientCount: () => ipcRenderer.invoke('Client:count')
 }
 
 contextBridge.exposeInMainWorld('api', api)

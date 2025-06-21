@@ -61,7 +61,12 @@ declare global {
       ) => Promise<import('../services/Client').ClientResponse>
       clientGetById: (id: number) => Promise<import('../services/Client').Client>
       clientGetAll: () => Promise<import('../services/Client').Client[]>
-      clientUpdate: (clientData: Client) => Promise<boolean>
+      clientGetAllPaginate: (page: number) => Promise<import('../services/Client').Client[]>
+      clientCount: () => number
+      clientUpdate: (
+        clientData: Client,
+        entreprise_id: number
+      ) => Promise<import('../services/Client').ClientResponse>
       clientDelete: (id: number) => Promise<boolean>
     }
   }

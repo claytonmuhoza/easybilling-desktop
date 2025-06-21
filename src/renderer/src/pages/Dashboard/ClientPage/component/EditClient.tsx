@@ -7,12 +7,14 @@ import { useState, useTransition } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import clientService from '@renderer/services/ClientService'
+import { useAuth } from '@renderer/context/AuthContext'
 export default function EditClient({ client }: { client: Client }): JSX.Element {
   const { closeModal } = useClientContext()
   const [isPending, setPending] = useState(false)
   const [isSent, startTransition] = useTransition()
   const [error, setError] = useState<string | undefined>()
   const [success, setSuccess] = useState<string | undefined>()
+  const { session } = useAuth()
   const form = useForm<z.infer<typeof ClientShema>>({
     resolver: zodResolver(ClientShema),
     defaultValues: {
@@ -37,22 +39,25 @@ export default function EditClient({ client }: { client: Client }): JSX.Element 
     setSuccess(undefined)
     startTransition(() => {
       clientService
-        .updateClient({
-          id: client.id,
-          nom: values.nom_entreprise_client,
-          NIF: values.nif_entreprise_client,
-          type_personne: values.type_client,
-          isLocalClient: values.localisation_client === 'local',
-          assujetti_tva: values.assujetti_tva_client,
-          client_telephone: values.numero_telephone_client,
-          client_mail: values.adresse_mail_client,
-          client_boite_postal: values.boite_postal_client,
-          secteur_activite: values.secteur_activite_client,
-          personne_contact_nom: values.personne_contact_client
-        })
+        .updateClient(
+          {
+            id: client.id,
+            nom: values.nom_entreprise_client,
+            NIF: values.nif_entreprise_client,
+            type_personne: values.type_client,
+            isLocalClient: values.localisation_client === 'local',
+            assujetti_tva: values.assujetti_tva_client,
+            client_telephone: values.numero_telephone_client,
+            client_mail: values.adresse_mail_client,
+            client_boite_postal: values.boite_postal_client,
+            secteur_activite: values.secteur_activite_client,
+            personne_contact_nom: values.personne_contact_client
+          },
+          session?.user.entreprise_id
+        )
         .then((data) => {
           if (data.success === false) {
-            setError(data.msg)
+            setError(data.success + data.msg)
           } else {
             form.reset()
             setSuccess('Le client a été modifier avec succès')
@@ -70,7 +75,7 @@ export default function EditClient({ client }: { client: Client }): JSX.Element 
       className="flex flex-col items-center justify-center gap-2 p-4 sm:gap-3"
     >
       {error ? <Alert color="failure">{error}</Alert> : <></>}
-      {success ? <Alert color="success">{success}</Alert> : <></>}
+      {success ? <Alert color="success">Success : {success}</Alert> : <></>}
       {/* <HiUser className="material-icons-round text-24 font-medium text-dark dark:text-primary md:text-24" /> */}
       <div className="flex w-full flex-col gap-2 sm:gap-3">
         <div className="items-cen flex flex-col gap-4 md:flex-row">
