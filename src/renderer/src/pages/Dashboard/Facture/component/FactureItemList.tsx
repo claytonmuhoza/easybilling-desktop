@@ -20,17 +20,22 @@ export default function FactureItemList(): JSX.Element {
           <Kbd>THVA 50000</Kbd> <Kbd>TVA 30000 </Kbd> <Kbd>TC 20000</Kbd> <Kbd>PFL 2000</Kbd>{' '}
         </div>
         <div>
-          Total <span>500000</span>
+          Total: <span className="font-bold">5000</span>
         </div>
       </div>
-      <div className="flex gap-2">
-        <div className="w-auto">
-          <Button size="xs">Modifier</Button>
+      <div className="flex justify-between">
+        <div className="flex gap-2">
+          <div>Date: 10/10/2024</div>
         </div>
-        <div className="w-auto">
-          <Button color="light" size="xs">
-            Voir
-          </Button>
+        <div className="flex gap-2">
+          <div className="w-auto">
+            <Button size="xs">Voir ou imprimer</Button>
+          </div>
+          <div className="w-auto">
+            <Button color="light" size="xs">
+              Annuler la facture
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

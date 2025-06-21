@@ -62,6 +62,9 @@ export default function CreateClient(): JSX.Element {
             setAlphabetic(false)
           }
         })
+        .catch(() => {
+          setError("Une erreur s'est produit, Veuillez réessayer.")
+        })
         .finally(() => {
           setPending(false)
         })

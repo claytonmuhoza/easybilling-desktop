@@ -1,6 +1,4 @@
-'use client'
-
-import { Client } from '@prisma/client'
+import { Client } from '@renderer/services/Client'
 import { FC, PropsWithChildren, createContext, useContext, useState } from 'react'
 
 interface ClientContextProps {
