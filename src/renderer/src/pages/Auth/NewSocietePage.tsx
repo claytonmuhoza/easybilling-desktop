@@ -2,16 +2,7 @@
 
 import { contribuableConfCreationSchema } from '@renderer/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  Alert,
-  Button,
-  Checkbox,
-  DarkThemeToggle,
-  Label,
-  Radio,
-  Select,
-  TextInput
-} from 'flowbite-react'
+import { Alert, Button, DarkThemeToggle, Label, Select, TextInput } from 'flowbite-react'
 // import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -21,6 +12,7 @@ import { z } from 'zod'
 import { Taxe } from '@renderer/services/Taxe'
 import { taxeService } from '@renderer/services/TaxeService'
 import { entrepriseService } from '@renderer/services/EntrepriseService'
+import { FormTaxeInput } from './components/FormTaxeInput'
 const NewSocietePage = ({
   identifiant_sys,
   password_sys,
@@ -65,7 +57,7 @@ const NewSocietePage = ({
       .insertEntreprise(entrepriseService.contribuableFormToEntrepriseData(values))
       .then((res) => {
         if (res) {
-          setBackToPreviousPage(undefined)
+          window.location.reload()
         } else {
           setErrorMessage("Erreur lors de l'enregistrement du contribuable")
         }
@@ -112,9 +104,10 @@ const NewSocietePage = ({
         taxes: taxes.map((taxe) => ({
           nom: taxe.nom,
           assujetti: false,
-          valeur_defaut: taxe.valeur_non_pourcentage ? taxe.valeur_non_pourcentage : 0,
-          est_pourcentage: taxe.is_pourcentage ? true : false,
-          values: taxe.valeurs,
+          est_pourcentage: taxe.valeurType === 'POURCENTAGE',
+          valeur_defaut:
+            taxe.valeurType === 'FIXE' && taxe.valeurFixe ? taxe.valeurFixe : undefined,
+          values: taxe.valeurType === 'POURCENTAGE' ? taxe.valeurs || [] : [],
           valeur_custom: false
         })),
         contact_telephone: '',
@@ -416,158 +409,14 @@ const NewSocietePage = ({
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                {form.watch('taxes').map((taxe, index) => (
-                  <div key={index}>
-                    <Controller
-                      control={form.control}
-                      name={`taxes.${index}.assujetti`}
-                      render={({ field: { onBlur, onChange, value } }) => (
-                        <fieldset className="flex max-w-md flex-col gap-4">
-                          <legend className="mb-4">
-                            {taxe.nom == 'pfl' ? (
-                              'Assujettit  au prélevement forfaitaire'
-                            ) : (
-                              <>Assujettit à la {taxe.nom}</>
-                            )}
-                          </legend>
-                          <div className="flex items-center gap-2">
-                            <Radio
-                              id={`oui_assujetti_${index}`}
-                              disabled={isPending}
-                              onBlur={onBlur} // notify when input is touched
-                              onChange={() => onChange(true)} // send value to hook form
-                              checked={value === true}
-                            />
-                            <Label htmlFor={`oui_assujetti_${index}`}>Oui</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Radio
-                              id={`non_assujetti_${index}`}
-                              disabled={isPending}
-                              onBlur={onBlur} // notify when input is touched
-                              onChange={() => onChange(false)} // send value to hook form
-                              checked={value === false}
-                            />
-                            <Label htmlFor={`non_assujetti_${index}`}>Non</Label>
-                          </div>
-                        </fieldset>
-                      )}
-                    />
-
-                    {/* Affichage conditionnel basé sur la valeur d'assujetti */}
-                    {taxe.assujetti && (
-                      <>
-                        <Controller
-                          control={form.control}
-                          name={`taxes.${index}.est_pourcentage`}
-                          render={({ field: { onBlur, onChange, value } }) => (
-                            <fieldset className="flex max-w-md flex-col gap-4">
-                              <legend className="mb-4">
-                                La valeur de la {taxe.nom} est un pourcentage ?
-                              </legend>
-                              <div className="flex items-center gap-2">
-                                <Radio
-                                  id={`oui_pourcentage_${index}`}
-                                  disabled={isPending}
-                                  onBlur={onBlur} // notify when input is touched
-                                  onChange={() => onChange(true)} // send value to hook form
-                                  checked={value === true}
-                                />
-                                <Label htmlFor={`oui_pourcentage_${index}`}>Oui</Label>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Radio
-                                  id={`non_pourcentage_${index}`}
-                                  disabled={isPending}
-                                  onBlur={onBlur} // notify when input is touched
-                                  onChange={() => onChange(false)} // send value to hook form
-                                  checked={value === false}
-                                />
-                                <Label htmlFor={`non_pourcentage_${index}`}>Non</Label>
-                              </div>
-                            </fieldset>
-                          )}
-                        />
-
-                        {/* Affichage conditionnel basé sur est_pourcentage */}
-                        {taxe.est_pourcentage ? (
-                          <div>
-                            <div>
-                              {taxe.est_pourcentage &&
-                              !taxe.valeur_custom &&
-                              taxe.values.length > 0 ? (
-                                <Controller
-                                  control={form.control}
-                                  name={`taxes.${index}.valeur_defaut`}
-                                  render={({ field, fieldState: { invalid, error } }) => (
-                                    <>
-                                      <Select
-                                        disabled={isPending}
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                        color={invalid ? 'failure' : undefined}
-                                        helperText={
-                                          invalid ? (
-                                            <>
-                                              <span className="font-medium">Oops!</span>{' '}
-                                              {error ? error?.message : ''}
-                                            </>
-                                          ) : (
-                                            <></>
-                                          )
-                                        }
-                                        required
-                                      >
-                                        {taxe.values.map((value, index) => (
-                                          <option key={index} value={value}>
-                                            {value}%
-                                          </option>
-                                        ))}
-                                      </Select>
-                                      <div className="flex items-center gap-2 mt-2">
-                                        <Checkbox
-                                          id={`custom_value_${index}`}
-                                          onChange={(e) => {
-                                            form.setValue(
-                                              `taxes.${index}.valeur_custom`,
-                                              e.target.checked
-                                            )
-                                          }}
-                                        />
-                                        <Label htmlFor={`custom_value_${index}`}>
-                                          La valeur n&apos;est pas dans la liste?
-                                        </Label>
-                                      </div>
-                                    </>
-                                  )}
-                                />
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <TextInput
-                                    {...form.register(`taxes.${index}.valeur_defaut`)}
-                                    disabled={isPending}
-                                    required
-                                    id={`taxes.${index}.valeur_defaut`}
-                                    type="number"
-                                    placeholder="Entrer la valeur par defaut"
-                                  />
-                                  <Label htmlFor={`taxes.${index}.valeur_defaut`}>%</Label>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <TextInput
-                            {...form.register(`taxes.${index}.valeur_defaut`)}
-                            disabled={isPending}
-                            required
-                            type="number"
-                            placeholder="Entrer la valeur par defaut"
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
+                {(form.watch('taxes') ?? []).map((taxe, index) => (
+                  <FormTaxeInput
+                    key={index}
+                    taxe={taxe}
+                    index={index}
+                    form={form}
+                    isPending={isPending}
+                  />
                 ))}
               </div>
               <div className="flex items-center gap-4 border-b border-gray-700 pb-2 text-5 font-semibold dark:text-slate-200">
@@ -679,7 +528,7 @@ const NewSocietePage = ({
                   </div>
                 )}
               />
-              <div className="flex items-center gap-4 border-b border-b border-gray-700 pb-2 pb-2 text-5 font-semibold dark:text-slate-200">
+              <div className="flex items-center gap-4  border-b border-gray-700 pb-2 text-5 font-semibold dark:text-slate-200">
                 <span>Adresse de l&apos;entreprise</span>
                 <HiLocationMarker />
               </div>

@@ -56,49 +56,95 @@ export const banqueSchema = z.object({
   numero_compte_banque: z.string().trim().min(1, 'Le numéro de compte est obligatoire')
 })
 export const taxeSchema = z.object({
-  nom: z.string().trim().min(1, { message: 'Le nom de la taxe est obligatoire' }),
+  nom: z.string(),
   assujetti: z.boolean(),
-  valeur_defaut: z.number().min(0, { message: 'La valeur par défaut doit être positive' }),
-  est_pourcentage: z.boolean(),
-  valeur_custom: z.boolean(),
-  values: z.array(z.number().min(0, { message: 'La valeur doit être positive' }))
+  est_pourcentage: z.boolean().optional(),
+  valeur_defaut: z.number().optional(),
+  valeur_custom: z.boolean().optional(),
+  values: z.number().array().optional()
 })
-export const contribuableConfCreationSchema = z.object({
-  nom: z
-    .string()
-    .trim()
-    .min(1, { message: 'le nom est obligatoire' })
-    .min(2, 'Le nom doit avoir au moins deux caractères'),
-  nif: z
-    .string()
-    .trim()
-    .min(1, { message: 'Le nif est obligatoire' })
-    .min(4, 'Le nif doit avoir au moins 4 caractère'),
-  rc: z.string({ required_error: 'le rc est obligatoire' }).trim().min(1, 'Le rc est obligatoire'),
-  identifiant_systeme: z.string().trim().min(1, "L'identifiat est obligatoire"),
-  mot_de_passe_systeme: z.string().trim().min(1, 'Le mot de passe systeme est obligatoire'),
-  type_contribuable: z.enum(['1', '2'], {
-    required_error: 'le type de contribuable est obligatoire',
-    invalid_type_error: 'le contribuable est soit une personne physique, soit une personne morale'
-  }),
-  direction_fiscale: z.enum(['DPMC', 'DMC', 'DGC']),
-  taxes: z.array(taxeSchema).min(1, { message: 'Au moins une taxe est requise' }),
-  forme_juridique: z.string().trim().min(1, 'La forme juridique est obligatoire'),
-  raison_social: z.string().trim().min(1, "La raison social de l'entreprise est obligatoire"),
-  contact_telephone: z.string(),
-  contact_bp: z.string(),
-  contact_email: z.union([
-    z.literal(''),
-    z.string().email({
-      message: 'Entrer un email valide'
+export const contribuableConfCreationSchema = z
+  .object({
+    nom: z
+      .string()
+      .trim()
+      .min(1, { message: 'le nom est obligatoire' })
+      .min(2, 'Le nom doit avoir au moins deux caractères'),
+    nif: z
+      .string()
+      .trim()
+      .min(1, { message: 'Le nif est obligatoire' })
+      .min(4, 'Le nif doit avoir au moins 4 caractère'),
+    rc: z
+      .string({ required_error: 'le rc est obligatoire' })
+      .trim()
+      .min(1, 'Le rc est obligatoire'),
+    identifiant_systeme: z.string().trim().min(1, "L'identifiat est obligatoire"),
+    mot_de_passe_systeme: z.string().trim().min(1, 'Le mot de passe systeme est obligatoire'),
+    type_contribuable: z.enum(['1', '2'], {
+      required_error: 'le type de contribuable est obligatoire',
+      invalid_type_error: 'le contribuable est soit une personne physique, soit une personne morale'
+    }),
+    direction_fiscale: z.enum(['DPMC', 'DMC', 'DGC']),
+    forme_juridique: z.string().trim().min(1, 'La forme juridique est obligatoire'),
+    raison_social: z.string().trim().min(1, "La raison social de l'entreprise est obligatoire"),
+    contact_telephone: z.string(),
+    contact_bp: z.string(),
+    contact_email: z.union([
+      z.literal(''),
+      z.string().email({
+        message: 'Entrer un email valide'
+      })
+    ]),
+    adresse_province: z.string().trim().min(1, 'la province est obligatoire'),
+    adresse_commune: z.string().trim().min(1, 'la commune est obligatoire'),
+    adresse_quartier: z.string().trim().min(1, 'le quartier est obligatoire'),
+    adresse_avenue: z.union([
+      z.literal(''),
+      z.string().trim().min(1, 'le quartier est obligatoire')
+    ]),
+    adresse_numero: z.union([z.literal(''), z.string().min(1, 'le numero est obligatoire')]),
+    taxes: z.array(taxeSchema)
+  })
+  .superRefine((data, ctx) => {
+    data.taxes.forEach((taxe, index) => {
+      const path = `taxes.${index}`
+
+      if (taxe.assujetti) {
+        // Vérification du champ est_pourcentage
+        if (typeof taxe.est_pourcentage !== 'boolean') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Veuillez indiquer si la taxe est un pourcentage.',
+            path: [`${path}.est_pourcentage`]
+          })
+        }
+
+        // valeur_defaut est requise
+        if (typeof taxe.valeur_defaut !== 'number' || taxe.valeur_defaut <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Veuillez fournir une valeur valide (> 0).',
+            path: [`${path}.valeur_defaut`]
+          })
+        }
+
+        // Si pourcentage + pas valeur custom → vérifier que valeur_defaut ∈ values
+        if (
+          taxe.est_pourcentage === true &&
+          taxe.valeur_custom === false &&
+          Array.isArray(taxe.values) &&
+          !taxe.values.includes(taxe.valeur_defaut ?? -1)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La valeur sélectionnée ne fait pas partie des valeurs autorisées.',
+            path: [`${path}.valeur_defaut`]
+          })
+        }
+      }
     })
-  ]),
-  adresse_province: z.string().trim().min(1, 'la province est obligatoire'),
-  adresse_commune: z.string().trim().min(1, 'la commune est obligatoire'),
-  adresse_quartier: z.string().trim().min(1, 'le quartier est obligatoire'),
-  adresse_avenue: z.union([z.literal(''), z.string().trim().min(1, 'le quartier est obligatoire')]),
-  adresse_numero: z.union([z.literal(''), z.string().min(1, 'le numero est obligatoire')])
-})
+  })
 export const contribuable_update_schema = z.object({
   nom: z
     .string()

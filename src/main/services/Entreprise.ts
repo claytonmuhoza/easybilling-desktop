@@ -1,6 +1,10 @@
 import { apiLoginResponseType, ApiObr, checkNIFResponseType } from './ApiObr'
 import { connectionToDatabase } from './Database'
 import { Taxe } from './Taxe'
+export type TaxeAssujettie = {
+  taxe: Taxe
+  valeur: number
+}
 
 export class Entreprise {
   id?: number
@@ -21,7 +25,7 @@ export class Entreprise {
   adresse_numero?: string
   identifiant_systeme: string
   mot_de_passe_systeme: string
-  taxes_assujetti: { taxe: Taxe; valeur_par_defaut: number; is_pourcentage: boolean }[]
+  taxes_assujetti: TaxeAssujettie[]
 
   constructor(data: Partial<Entreprise> = {}) {
     this.id = data.id
@@ -79,15 +83,12 @@ export class Entreprise {
 
       if (result.changes > 0) {
         const entrepriseId = result.lastInsertRowid as number
-        entreprise.taxes_assujetti.forEach(({ taxe, valeur_par_defaut, is_pourcentage }) => {
-          const taxeDb = Taxe.getTaxeByName(taxe.nom)
+        entreprise.taxes_assujetti.forEach(({ taxe, valeur }) => {
+          const taxeDb = Taxe.getByName(taxe.nom)
           if (taxeDb) {
             db.prepare(
-              `
-              INSERT INTO assujetti (entreprise_id, taxe_id, valeur_par_defaut, is_pourcentage)
-              VALUES (?, ?, ?, ?)
-            `
-            ).run(entrepriseId, taxeDb.id, valeur_par_defaut, is_pourcentage ? 1 : 0)
+              `INSERT INTO assujetti (entreprise_id, taxe_id, valeur) VALUES (?, ?, ?)`
+            ).run(entrepriseId, taxeDb.id, valeur || 0)
           }
         })
         return true
@@ -97,6 +98,29 @@ export class Entreprise {
       return false
     }
     return false
+  }
+  static getTaxesForEntreprise(entrepriseId: number): TaxeAssujettie[] {
+    const db = connectionToDatabase()
+    const rows = db
+      .prepare(
+        `
+      SELECT t.*, a.valeur FROM taxe t
+      INNER JOIN assujetti a ON t.id = a.taxe_id
+      WHERE a.entreprise_id = ?
+    `
+      )
+      .all(entrepriseId)
+
+    return rows.map((row) => ({
+      taxe: new Taxe({
+        id: row.id,
+        nom: row.nom,
+        type: row.type,
+        valeurType: row.valeur_type,
+        valeurFixe: row.valeur_fixe
+      }),
+      valeur: row.valeur
+    }))
   }
 
   static getEntrepriseByNIF(nif: string): Entreprise | null {

@@ -1,27 +1,37 @@
+export type ValeurType = 'POURCENTAGE' | 'FIXE'
+
 export interface TaxeData {
   id?: number
   nom: string
   type: 'tva' | 'pfl' | 'autre'
-  is_pourcentage: boolean
-  valeur_non_pourcentage: number | null
-  valeurs?: number[]
+  valeurType: ValeurType
+  valeurFixe?: number | null // utilisé uniquement si FIXE
+  valeurs?: number[] // utilisé uniquement si POURCENTAGE
 }
 
 export class Taxe implements TaxeData {
   id?: number
   nom: string
   type: 'tva' | 'pfl' | 'autre'
-  is_pourcentage: boolean
-  valeur_non_pourcentage: number | null
+  valeurType: ValeurType
+  valeurFixe?: number | null
   valeurs: number[]
 
   constructor(data: TaxeData) {
     this.id = data.id
     this.nom = data.nom
     this.type = data.type
-    this.is_pourcentage = data.is_pourcentage
-    this.valeur_non_pourcentage = data.valeur_non_pourcentage
+    this.valeurType = data.valeurType
+    this.valeurFixe = data.valeurFixe ?? null
     this.valeurs = data.valeurs || []
+  }
+
+  isPourcentage(): boolean {
+    return this.valeurType === 'POURCENTAGE'
+  }
+
+  isFixe(): boolean {
+    return this.valeurType === 'FIXE'
   }
 }
 

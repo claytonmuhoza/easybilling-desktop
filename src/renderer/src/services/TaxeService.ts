@@ -1,4 +1,4 @@
-import type { Taxe, ValeurTaxe } from '@renderer/services/Taxe'
+import { Taxe, ValeurTaxe } from '@renderer/services/Taxe'
 
 export const taxeService = {
   /**
@@ -7,7 +7,22 @@ export const taxeService = {
    */
   getAllTaxes: async (): Promise<Taxe[]> => {
     try {
-      const taxes = await window.api.taxesAll()
+      const taxesRaw = await window.api.taxesAll()
+      const taxes: Taxe[] = await Promise.all(
+        taxesRaw.map(async (taxe: Taxe) => {
+          const values: number[] = (await window.api.taxesValeurs(taxe.id || 0)).map(
+            (v) => v.valeur
+          )
+          return new Taxe({
+            id: taxe.id,
+            nom: taxe.nom,
+            type: taxe.type,
+            valeurType: taxe.valeurType,
+            valeurFixe: taxe.valeurFixe,
+            valeurs: values || []
+          })
+        })
+      )
       return taxes
     } catch (error) {
       console.error('Erreur lors de la récupération des taxes', error)

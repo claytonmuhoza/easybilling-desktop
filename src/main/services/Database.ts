@@ -12,20 +12,19 @@ export function connectionToDatabase(): Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       lien TEXT UNIQUE NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS taxe (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nom TEXT UNIQUE NOT NULL,
-      type TEXT CHECK(type IN ('tva','pfl','autre')) NOT NULL,
-      is_pourcentage BOOLEAN NOT NULL,
-      valeur_non_pourcentage REAL
-    );
-    CREATE TABLE IF NOT EXISTS valeurs_taxe (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      id_taxe INTEGER NOT NULL,
-      valeur REAL NOT NULL,
-      FOREIGN KEY (id_taxe) REFERENCES taxe(id) ON DELETE CASCADE,
-      UNIQUE(id_taxe, valeur)
-    );
+      CREATE TABLE IF NOT EXISTS taxe (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT NOT NULL,
+    type TEXT NOT NULL, -- 'tva', 'pfl', 'autre'
+    valeur_type TEXT NOT NULL, -- 'POURCENTAGE' ou 'FIXE'
+    valeur_fixe REAL -- null si % (valeurs possibles dans valeurs_taxe)
+  );
+   CREATE TABLE IF NOT EXISTS valeurs_taxe (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_taxe INTEGER NOT NULL,
+  valeur REAL NOT NULL,
+  FOREIGN KEY (id_taxe) REFERENCES taxe(id)
+);
     CREATE TABLE IF NOT EXISTS entreprise (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nom TEXT NOT NULL,
@@ -47,15 +46,14 @@ export function connectionToDatabase(): Database {
       mot_de_passe_systeme TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS assujetti (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      entreprise_id INTEGER NOT NULL,
-      taxe_id INTEGER NOT NULL,
-      valeur_par_defaut REAL,
-      is_pourcentage BOOLEAN,
-      FOREIGN KEY (entreprise_id) REFERENCES entreprise(id) ON DELETE CASCADE,
-      FOREIGN KEY (taxe_id) REFERENCES taxe(id) ON DELETE CASCADE,
-      UNIQUE(entreprise_id, taxe_id)
-    );
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entreprise_id INTEGER NOT NULL,
+  taxe_id INTEGER NOT NULL,
+  valeur REAL NOT NULL,
+  FOREIGN KEY (entreprise_id) REFERENCES entreprise(id),
+  FOREIGN KEY (taxe_id) REFERENCES taxe(id)
+);
+
     CREATE TABLE IF NOT EXISTS utilisateur (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nom TEXT NOT NULL,
@@ -76,15 +74,22 @@ export function connectionToDatabase(): Database {
     CREATE TABLE IF NOT EXISTS produit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nom TEXT NOT NULL,
-      categorie_id INTEGER NOT NULL,
-      unite_mesure_id INTEGER NOT NULL,
-      prix_htva REAL NOT NULL,
-      taxe_conso_id INTEGER,
-      taxe_service_id INTEGER,
-      FOREIGN KEY (categorie_id) REFERENCES categorie_produit(id) ON DELETE CASCADE,
-      FOREIGN KEY (unite_mesure_id) REFERENCES unite_mesure(id) ON DELETE CASCADE,
-      FOREIGN KEY (taxe_conso_id) REFERENCES taxe(id),
-      FOREIGN KEY (taxe_service_id) REFERENCES taxe(id)
+      est_stockable BOOLEAN NOT NULL DEFAULT 0,
+      prix_revient REAL,
+      prix_vente_ttc REAL NOT NULL,
+      id_categorie INTEGER NOT NULL,
+      id_unite_mesure INTEGER NOT NULL,
+      FOREIGN KEY (id_categorie) REFERENCES categorie_produit(id),
+      FOREIGN KEY (id_unite_mesure) REFERENCES unite_mesure(id)
+    );
+    CREATE TABLE IF NOT EXISTS produit_taxe (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_produit INTEGER NOT NULL,
+      id_taxe INTEGER NOT NULL,
+      valeur_appliquee REAL NOT NULL, -- peut être un pourcentage ou un montant fixe
+      FOREIGN KEY (id_produit) REFERENCES produit(id),
+      FOREIGN KEY (id_taxe) REFERENCES taxe(id),
+      UNIQUE (id_produit, id_taxe) -- évite les doublons pour un même produit et taxe
     );
     CREATE TABLE IF NOT EXISTS stock_mouvement (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,10 +157,10 @@ export function connectionToDatabase(): Database {
   if (countRow.count === 0) {
     // Insertion de la taxe 'tva'
     const insertTaxeStmt = db.prepare(`
-      INSERT OR IGNORE INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
+      INSERT OR IGNORE INTO taxe (nom, type, valeur_type, valeur_fixe)
       VALUES (?, ?, ?, ?)
     `)
-    insertTaxeStmt.run('tva', 'tva', 1, 0)
+    insertTaxeStmt.run('tva', 'tva', 'POURCENTAGE', 0)
     // Récupérer l'ID de la taxe 'tva'
     const getTaxeIdStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
     const taxeRow = getTaxeIdStmt.get('tva')
@@ -171,9 +176,9 @@ export function connectionToDatabase(): Database {
       }
     }
     // Insertion de la taxe 'pfl'
-    insertTaxeStmt.run('pfl', 'pfl', 0, 0)
+    insertTaxeStmt.run('pfl', 'pfl', 'FIXE', 0)
     // Insertion de la taxe 'taxe de consommation'
-    insertTaxeStmt.run('taxe de consommation', 'autre', 1, 0)
+    insertTaxeStmt.run('taxe de consommation', 'autre', 'POURCENTAGE', 0)
     // Récupérer l'ID de la taxe 'taxe de consommation'
     const getTaxeConsommationStmt = db.prepare('SELECT id FROM taxe WHERE nom = ?')
     const taxeConsommationRow = getTaxeConsommationStmt.get('taxe de consommation')

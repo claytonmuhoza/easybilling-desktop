@@ -14,6 +14,7 @@ function NewUserForm(): JSX.Element {
   const [entreprises, setEntreprises] = useState<Entreprise[] | undefined>()
   const [isPending, startTransition] = useTransition()
   const [errorMessage, setErrorMessage] = useState<string | undefined>()
+  const [succeessMessage, setSuccessMessage] = useState<string | undefined>()
   useEffect(() => {
     entrepriseService.getAllEntreprises().then((data) => {
       setEntreprises(data)
@@ -28,6 +29,7 @@ function NewUserForm(): JSX.Element {
     }
   })
   const onSubmit = (values: z.infer<typeof NewUserSchema>): void => {
+    setSuccessMessage(undefined)
     setErrorMessage(undefined)
     console.log(values)
     startTransition(() =>
@@ -35,7 +37,8 @@ function NewUserForm(): JSX.Element {
         userService
           .createUser(userService.userSchemaToUser(values))
           .then(() => {
-            setErrorMessage('Utilisateur enregistré avec succès')
+            setSuccessMessage('Utilisateur enregistré avec succès')
+            window.location.reload()
           })
           .catch((error) => {
             setErrorMessage(error.message)
@@ -53,8 +56,17 @@ function NewUserForm(): JSX.Element {
       <div className="flex h-full min-h-screen w-screen flex-row items-center justify-center">
         {errorMessage ? (
           <div className="absolute left-0 top-0 z-10  flex w-full flex-col items-center justify-center p-4">
+            <Alert color="success" onDismiss={() => setSuccessMessage(undefined)} className="">
+              <span className="font-medium">Erreur!</span> {succeessMessage}
+            </Alert>
             <Alert color="failure" onDismiss={() => setErrorMessage(undefined)} className="">
               <span className="font-medium">Erreur!</span> {errorMessage}
+            </Alert>
+          </div>
+        ) : succeessMessage ? (
+          <div className="absolute left-0 top-0 z-10  flex w-full flex-col items-center justify-center p-4">
+            <Alert color="success" onDismiss={() => setSuccessMessage(undefined)} className="">
+              <span className="font-medium"></span> {succeessMessage}
             </Alert>
           </div>
         ) : (

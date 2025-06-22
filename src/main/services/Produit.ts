@@ -1,108 +1,131 @@
 import { connectionToDatabase } from './Database'
+import { Taxe } from './Taxe'
+
+export interface ProduitTaxe {
+  taxe: Taxe
+  valeur_appliquee: number
+}
 
 export class Produit {
   id?: number
   nom: string
-  categorie_id: number
-  unite_mesure_id: number
-  prix_htva: number
-  taxe_conso_id?: number
-  taxe_service_id?: number
+  est_stockable: boolean
+  prix_revient?: number | null
+  prix_vente_ttc: number
+  id_categorie: number
+  id_unite_mesure: number
+  taxes_appliquees: ProduitTaxe[] = []
 
   constructor({
     id,
     nom,
-    categorie_id,
-    unite_mesure_id,
-    prix_htva,
-    taxe_conso_id,
-    taxe_service_id
+    est_stockable,
+    prix_revient,
+    prix_vente_ttc,
+    id_categorie,
+    id_unite_mesure,
+    taxes_appliquees
   }: {
     id?: number
     nom: string
-    categorie_id: number
-    unite_mesure_id: number
-    prix_htva: number
-    taxe_conso_id?: number
-    taxe_service_id?: number
+    est_stockable: boolean
+    prix_revient?: number | null
+    prix_vente_ttc: number
+    id_categorie: number
+    id_unite_mesure: number
+    taxes_appliquees?: ProduitTaxe[]
   }) {
     this.id = id
     this.nom = nom
-    this.categorie_id = categorie_id
-    this.unite_mesure_id = unite_mesure_id
-    this.prix_htva = prix_htva
-    this.taxe_conso_id = taxe_conso_id
-    this.taxe_service_id = taxe_service_id
+    this.est_stockable = est_stockable
+    this.prix_revient = prix_revient
+    this.prix_vente_ttc = prix_vente_ttc
+    this.id_categorie = id_categorie
+    this.id_unite_mesure = id_unite_mesure
+    this.taxes_appliquees = taxes_appliquees || []
   }
 
-  static insertProduit(produit: Produit): boolean {
+  static insert(produit: Produit): number | null {
     const db = connectionToDatabase()
-    const stmt = db.prepare(
-      'INSERT INTO produit (nom, categorie_id, unite_mesure_id, prix_htva, taxe_conso_id, taxe_service_id) VALUES (?, ?, ?, ?, ?, ?)'
+    const insertProduit = db.prepare(`
+      INSERT INTO produit (nom, est_stockable, prix_revient, prix_vente_ttc, id_categorie, id_unite_mesure)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `)
+
+    const result = insertProduit.run(
+      produit.nom,
+      produit.est_stockable ? 1 : 0,
+      produit.est_stockable ? (produit.prix_revient ?? null) : null,
+      produit.prix_vente_ttc,
+      produit.id_categorie,
+      produit.id_unite_mesure
     )
-    try {
-      const result = stmt.run(
-        produit.nom,
-        produit.categorie_id,
-        produit.unite_mesure_id,
-        produit.prix_htva,
-        produit.taxe_conso_id || null,
-        produit.taxe_service_id || null
-      )
-      return result.changes > 0
-    } catch (error) {
-      console.error("Erreur lors de l'insertion du produit:", error)
-      return false
+
+    const produitId = result.lastInsertRowid as number
+
+    for (const taxe of produit.taxes_appliquees) {
+      const insertTaxe = db.prepare(`
+        INSERT INTO produit_taxe (id_produit, id_taxe, valeur_appliquee)
+        VALUES (?, ?, ?)
+      `)
+      insertTaxe.run(produitId, taxe.taxe.id, taxe.valeur_appliquee)
     }
+
+    return produitId
   }
 
-  static getProduitById(id: number): Produit | null {
-    const db = connectionToDatabase()
-    const row = db.prepare('SELECT * FROM produit WHERE id = ?').get(id)
-    return row ? new Produit(row as Produit) : null
-  }
-
-  static getAllProduits(): Produit[] {
+  static getAll(): Produit[] {
     const db = connectionToDatabase()
     const rows = db.prepare('SELECT * FROM produit').all()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return rows.map((row: any) => new Produit(row as Produit))
+
+    return rows.map((row) => {
+      const taxes = Produit.getTaxesForProduit(row.id)
+      return new Produit({
+        id: row.id,
+        nom: row.nom,
+        est_stockable: !!row.est_stockable,
+        prix_revient: row.prix_revient,
+        prix_vente_ttc: row.prix_vente_ttc,
+        id_categorie: row.id_categorie,
+        id_unite_mesure: row.id_unite_mesure,
+        taxes_appliquees: taxes
+      })
+    })
   }
 
-  static updateProduit(produit: Produit): boolean {
-    if (!produit.id) {
-      console.error('Produit id manquant pour la mise à jour')
-      return false
-    }
+  static getTaxesForProduit(idProduit: number): ProduitTaxe[] {
     const db = connectionToDatabase()
-    const stmt = db.prepare(
-      'UPDATE produit SET nom = ?, categorie_id = ?, unite_mesure_id = ?, prix_htva = ?, taxe_conso_id = ?, taxe_service_id = ? WHERE id = ?'
-    )
-    try {
-      const result = stmt.run(
-        produit.nom,
-        produit.categorie_id,
-        produit.unite_mesure_id,
-        produit.prix_htva,
-        produit.taxe_conso_id || null,
-        produit.taxe_service_id || null,
-        produit.id
+    const rows = db
+      .prepare(
+        `
+      SELECT pt.valeur_appliquee, t.*
+      FROM produit_taxe pt
+      JOIN taxe t ON pt.id_taxe = t.id
+      WHERE pt.id_produit = ?
+    `
       )
-      return result.changes > 0
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du produit:', error)
-      return false
-    }
+      .all(idProduit)
+
+    return rows.map((row) => ({
+      taxe: new Taxe({
+        id: row.id,
+        nom: row.nom,
+        type: row.type,
+        valeurType: row.valeur_type,
+        valeurFixe: row.valeur_fixe
+      }),
+      valeur_appliquee: row.valeur_appliquee
+    }))
   }
 
-  static deleteProduit(id: number): boolean {
+  static deleteById(id: number): boolean {
     const db = connectionToDatabase()
-    const stmt = db.prepare('DELETE FROM produit WHERE id = ?')
     try {
-      const result = stmt.run(id)
+      db.prepare('DELETE FROM produit_taxe WHERE id_produit = ?').run(id)
+      const result = db.prepare('DELETE FROM produit WHERE id = ?').run(id)
       return result.changes > 0
     } catch (error) {
-      console.error('Erreur lors de la suppression du produit:', error)
+      console.error('Erreur suppression produit:', error)
       return false
     }
   }

@@ -1,79 +1,98 @@
 import { connectionToDatabase } from './Database'
 
+export type TaxeType = 'tva' | 'pfl' | 'autre'
+export type ValeurType = 'POURCENTAGE' | 'FIXE'
+
 export class Taxe {
   id?: number
   nom: string
-  type: 'tva' | 'pfl' | 'autre'
-  is_pourcentage: boolean
-  valeur_non_pourcentage: number | null
-  valeurs: number[]
+  type: TaxeType
+  valeurType: ValeurType
+  valeurFixe: number | null
 
   constructor({
     id,
     nom,
     type,
-    is_pourcentage,
-    valeur_non_pourcentage
+    valeurType,
+    valeurFixe
   }: {
     id?: number
     nom: string
-    type: 'tva' | 'pfl' | 'autre'
-    is_pourcentage: boolean
-    valeur_non_pourcentage: number | null
+    type: TaxeType
+    valeurType: ValeurType
+    valeurFixe: number | null
   }) {
     this.id = id
     this.nom = nom
     this.type = type
-    this.is_pourcentage = is_pourcentage
-    this.valeur_non_pourcentage = valeur_non_pourcentage
-    this.valeurs = Taxe.getValeursByTaxeId(id || 0)
+    this.valeurType = valeurType
+    this.valeurFixe = valeurFixe
   }
 
-  static insertTaxe(taxe: Taxe): boolean {
+  // Insère une nouvelle taxe
+  static insert(taxe: Taxe): number | null {
     try {
       const db = connectionToDatabase()
       const stmt = db.prepare(`
-        INSERT INTO taxe (nom, type, is_pourcentage, valeur_non_pourcentage)
+        INSERT INTO taxe (nom, type, valeur_type, valeur_fixe)
         VALUES (?, ?, ?, ?)
       `)
-      stmt.run(taxe.nom, taxe.type, taxe.is_pourcentage, taxe.valeur_non_pourcentage)
-      return true
+      const result = stmt.run(taxe.nom, taxe.type, taxe.valeurType, taxe.valeurFixe)
+      return result.lastInsertRowid as number
     } catch (error) {
-      console.error('Erreur lors de l’insertion de la taxe:', error)
-      return false
+      console.error('Erreur insertion taxe:', error)
+      return null
     }
   }
 
-  static getAllTaxes(): Taxe[] {
+  static getAll(): Taxe[] {
     const db = connectionToDatabase()
-    const rows = db.prepare('SELECT * FROM taxe group by nom').all()
-    return rows.map((row) => new Taxe(row as Taxe))
+    const rows = db.prepare('SELECT * FROM taxe GROUP BY nom').all()
+    return rows.map(
+      (row) =>
+        new Taxe({
+          id: row.id,
+          nom: row.nom,
+          type: row.type,
+          valeurType: row.valeur_type,
+          valeurFixe: row.valeur_fixe
+        })
+    )
   }
 
-  static getTaxeByName(nom: string): Taxe | null {
+  static getByName(nom: string): Taxe | null {
     const db = connectionToDatabase()
     const row = db.prepare('SELECT * FROM taxe WHERE nom = ?').get(nom)
-    return row ? new Taxe(row as Taxe) : null
+    return row
+      ? new Taxe({
+          id: row.id,
+          nom: row.nom,
+          type: row.type,
+          valeurType: row.valeur_type,
+          valeurFixe: row.valeur_fixe
+        })
+      : null
   }
 
-  static deleteTaxe(nom: string): boolean {
+  static deleteByName(nom: string): boolean {
     try {
       const db = connectionToDatabase()
       const stmt = db.prepare('DELETE FROM taxe WHERE nom = ?')
       return stmt.run(nom).changes > 0
     } catch (error) {
-      console.error('Erreur lors de la suppression de la taxe:', error)
+      console.error('Erreur suppression taxe:', error)
       return false
     }
   }
 
-  static getValeursByTaxeId(id_taxe: number): number[] {
+  static getValeursPourcentages(id_taxe: number): number[] {
     const db = connectionToDatabase()
     const rows = db.prepare('SELECT valeur FROM valeurs_taxe WHERE id_taxe = ?').all(id_taxe)
     return rows.map((row) => row.valeur)
   }
 
-  static insertValeurTaxe(id_taxe: number, valeur: number): boolean {
+  static insertValeurPourcentage(id_taxe: number, valeur: number): boolean {
     try {
       const db = connectionToDatabase()
       const stmt = db.prepare(`
@@ -83,12 +102,11 @@ export class Taxe {
       stmt.run(id_taxe, valeur)
       return true
     } catch (error) {
-      console.error('Erreur lors de l’insertion de la valeur de taxe:', error)
+      console.error('Erreur insertion valeur de taxe:', error)
       return false
     }
   }
 }
-
 export class ValeurTaxe {
   id?: number
   id_taxe: number
@@ -99,11 +117,10 @@ export class ValeurTaxe {
     this.id_taxe = id_taxe
     this.valeur = valeur
   }
-  
 
-  static insertValeurTaxe(valeurTaxe: ValeurTaxe): boolean {
+  static insert(valeurTaxe: ValeurTaxe): boolean {
+    const db = connectionToDatabase()
     try {
-      const db = connectionToDatabase()
       const stmt = db.prepare(`
         INSERT INTO valeurs_taxe (id_taxe, valeur)
         VALUES (?, ?)
@@ -111,23 +128,14 @@ export class ValeurTaxe {
       stmt.run(valeurTaxe.id_taxe, valeurTaxe.valeur)
       return true
     } catch (error) {
-      console.error('Erreur lors de l’insertion de la valeur de taxe:', error)
+      console.error('Erreur insertion valeur taxe:', error)
       return false
     }
   }
 
-  static getValuesForTaxe(idTaxe: number): ValeurTaxe[] {
+  static getForTaxe(idTaxe: number): ValeurTaxe[] {
     const db = connectionToDatabase()
-    const stmt = db.prepare('SELECT * FROM valeurs_taxe WHERE id_taxe = ?')
-    const rows = stmt.all(idTaxe)
-    return rows.map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (row: any) =>
-        new ValeurTaxe({
-          id: row.id,
-          id_taxe: row.id_taxe,
-          valeur: row.valeur
-        })
-    )
+    const rows = db.prepare('SELECT * FROM valeurs_taxe WHERE id_taxe = ?').all(idTaxe)
+    return rows.map((row) => new ValeurTaxe(row))
   }
 }

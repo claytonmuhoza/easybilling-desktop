@@ -136,7 +136,9 @@ export class Client {
     const pageSize = 20
     const db = connectionToDatabase()
     const offset = (page - 1) * pageSize
-    const rows = db.prepare('SELECT * FROM client LIMIT ? OFFSET ?').all(pageSize, offset)
+    const rows = db
+      .prepare('SELECT * FROM client LIMIT ? OFFSET ? order by id desc')
+      .all(pageSize, offset)
     return rows.map((row) => new Client(row as Client))
   }
   static countClients(): number {
