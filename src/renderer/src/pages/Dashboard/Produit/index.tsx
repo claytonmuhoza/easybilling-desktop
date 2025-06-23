@@ -1,5 +1,5 @@
-import NewArticle from './component/NewProduit'
+import ProductList from './components/ProductList'
 
 export default function ProduitPage(): JSX.Element {
-  return <NewArticle />
+  return <ProductList />
 }

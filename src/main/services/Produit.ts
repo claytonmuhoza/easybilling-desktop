@@ -8,6 +8,7 @@ export interface ProduitTaxe {
 
 export class Produit {
   id?: number
+  code_produit: string
   nom: string
   est_stockable: boolean
   prix_revient?: number | null
@@ -18,6 +19,7 @@ export class Produit {
 
   constructor({
     id,
+    code_produit,
     nom,
     est_stockable,
     prix_revient,
@@ -27,6 +29,7 @@ export class Produit {
     taxes_appliquees
   }: {
     id?: number
+    code_produit: string
     nom: string
     est_stockable: boolean
     prix_revient?: number | null
@@ -36,6 +39,7 @@ export class Produit {
     taxes_appliquees?: ProduitTaxe[]
   }) {
     this.id = id
+    this.code_produit = code_produit
     this.nom = nom
     this.est_stockable = est_stockable
     this.prix_revient = prix_revient
@@ -48,8 +52,8 @@ export class Produit {
   static insert(produit: Produit): number | null {
     const db = connectionToDatabase()
     const insertProduit = db.prepare(`
-      INSERT INTO produit (nom, est_stockable, prix_revient, prix_vente_ttc, id_categorie, id_unite_mesure)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO produit (nom, code_produit, est_stockable, prix_revient, prix_vente_ttc, id_categorie, id_unite_mesure)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
 
     const result = insertProduit.run(
@@ -82,6 +86,7 @@ export class Produit {
       const taxes = Produit.getTaxesForProduit(row.id)
       return new Produit({
         id: row.id,
+        code_produit: row.code_produit,
         nom: row.nom,
         est_stockable: !!row.est_stockable,
         prix_revient: row.prix_revient,

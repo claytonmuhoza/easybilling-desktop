@@ -73,6 +73,7 @@ export function connectionToDatabase(): Database {
     );
     CREATE TABLE IF NOT EXISTS produit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code_produit TEXT NOT NULL,
       nom TEXT NOT NULL,
       est_stockable BOOLEAN NOT NULL DEFAULT 0,
       prix_revient REAL,
