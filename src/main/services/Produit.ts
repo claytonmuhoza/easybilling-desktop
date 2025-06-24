@@ -10,6 +10,8 @@ export class Produit {
   id?: number
   code_produit: string
   nom: string
+  stock_minimal_alerte: number
+  stock_actuel: number
   est_stockable: boolean
   prix_revient?: number | null
   prix_vente_ttc: number
@@ -21,6 +23,8 @@ export class Produit {
     id,
     code_produit,
     nom,
+    stock_minimal_alerte,
+    stock_actuel,
     est_stockable,
     prix_revient,
     prix_vente_ttc,
@@ -31,6 +35,8 @@ export class Produit {
     id?: number
     code_produit: string
     nom: string
+    stock_minimal_alerte: number
+    stock_actuel: number
     est_stockable: boolean
     prix_revient?: number | null
     prix_vente_ttc: number
@@ -41,6 +47,9 @@ export class Produit {
     this.id = id
     this.code_produit = code_produit
     this.nom = nom
+    this.stock_minimal_alerte = stock_minimal_alerte
+    this.stock_actuel = stock_actuel
+    this.est_stockable = est_stockable
     this.est_stockable = est_stockable
     this.prix_revient = prix_revient
     this.prix_vente_ttc = prix_vente_ttc
@@ -88,6 +97,8 @@ export class Produit {
         id: row.id,
         code_produit: row.code_produit,
         nom: row.nom,
+        stock_minimal_alerte: row.stock_minimal_alerte,
+        stock_actuel: row.stock_actuel,
         est_stockable: !!row.est_stockable,
         prix_revient: row.prix_revient,
         prix_vente_ttc: row.prix_vente_ttc,

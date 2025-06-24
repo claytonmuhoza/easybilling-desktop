@@ -1,3 +1,5 @@
+import { Categorie } from './../renderer/src/services/Categorie'
+import { UniteMesure } from './../renderer/src/services/UniteMesure'
 import { TypeTaxe } from './TypeTaxe'
 
 export class Produit {
@@ -5,6 +7,8 @@ export class Produit {
   private _nom: string
   private _prixTTC: number
   private taxes: TypeTaxe[]
+  private uniteMesure: UniteMesure
+  private categorie: Categorie
   constructor({ id, nom, prix }: { id: string; nom: string; prix: number }) {
     this._id = id
     this._nom = nom
