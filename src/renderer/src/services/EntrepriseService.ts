@@ -93,16 +93,17 @@ export const entrepriseService = {
       adresse_numero: form.adresse_numero,
       identifiant_systeme: form.identifiant_systeme,
       mot_de_passe_systeme: form.mot_de_passe_systeme,
-      taxes_assujetti: form.taxes.map((taxe) => ({
-        taxe: {
-          nom: taxe.nom,
-          type: taxe.nom === 'TVA' ? 'tva' : taxe.nom === 'PFL' ? 'pfl' : 'autre',
-          is_pourcentage: taxe.est_pourcentage,
-          valeur_non_pourcentage: taxe.est_pourcentage ? null : taxe.valeur_defaut
-        },
-        valeur_par_defaut: taxe.valeur_defaut,
-        is_pourcentage: taxe.est_pourcentage
-      }))
+      taxes_assujetti: form.taxes
+        .filter((taxe) => taxe.assujetti)
+        .map((taxe) => ({
+          taxe: {
+            nom: taxe.nom,
+            type: taxe.nom === 'TVA' ? 'tva' : taxe.nom === 'PFL' ? 'pfl' : 'autre',
+            is_pourcentage: !!taxe.est_pourcentage,
+            valeur_non_pourcentage: taxe.est_pourcentage ? null : taxe.valeur_defaut || 0
+          },
+          valeur: taxe.valeur_defaut || 0
+        }))
     }
   }
 }

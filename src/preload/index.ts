@@ -3,7 +3,7 @@ import type { apiLoginResponseType } from '../main/services/ApiObr'
 import type { FactureData, FactureItemData } from '../main/services/Facture'
 import type { Taxe, ValeurTaxe } from '../main/services/Taxe'
 import type { User } from '../main/services/User'
-import type { Entreprise } from '../main/services/Entreprise'
+import type { Entreprise, TaxeAssujettie } from '../main/services/Entreprise'
 import type { Produit } from '../main/services/Produit'
 import { UniteMesure } from '../main/services/UniteMesure'
 import { Categorie } from '../main/services/Categorie'
@@ -19,6 +19,7 @@ interface IpcAPI {
   entrepriseGetFirst: () => Promise<Entreprise | null>
   entrepriseCount: () => Promise<number>
   entrepriseGetAll: () => Promise<Entreprise[]>
+  entrepriseGetAllTaxes: (entreprise_id: number) => Promise<TaxeAssujettie[]>
 
   factureInsert: (factureData: FactureData) => Promise<number | null>
   factureCalculateTotals: (items: FactureItemData[]) => Promise<{
@@ -71,6 +72,8 @@ const api: IpcAPI = {
   entrepriseGetFirst: () => ipcRenderer.invoke('Entreprise:getFirst'),
   entrepriseCount: () => ipcRenderer.invoke('Entreprise:count'),
   entrepriseGetAll: () => ipcRenderer.invoke('Entreprise:getAll'),
+  entrepriseGetAllTaxes: (entreprise_id: number) =>
+    ipcRenderer.invoke('Entreprise:getAllTaxesForEntreprise', entreprise_id),
   factureInsert: (factureData) => ipcRenderer.invoke('Facturation:insert', factureData),
   factureCalculateTotals: (items) => ipcRenderer.invoke('Facturation:calculateTotals', items),
 

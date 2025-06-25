@@ -137,7 +137,7 @@ export class Client {
     const db = connectionToDatabase()
     const offset = (page - 1) * pageSize
     const rows = db
-      .prepare('SELECT * FROM client LIMIT ? OFFSET ? order by id desc')
+      .prepare('SELECT * FROM client order by id desc LIMIT ? OFFSET ? ')
       .all(pageSize, offset)
     return rows.map((row) => new Client(row as Client))
   }

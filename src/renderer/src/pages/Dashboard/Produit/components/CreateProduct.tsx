@@ -9,13 +9,23 @@ import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { categorieService } from '@renderer/services/CategorieServices'
 import { uniteMesureService } from '@renderer/services/UniteMesureService'
+import { Taxe } from '@renderer/services/Taxe'
+import { taxeService } from '@renderer/services/TaxeService'
+import { useAuth } from '@renderer/context/AuthContext'
+import { TaxeInputComponent } from './TaxeInputComponent'
 
 const CreateProduct = (): JSX.Element => {
   const [categories, setCategorie] = useState<Categorie[]>([])
   const [loadingCategorie, setLoadingCategorie] = useState(true)
   const [loadingUniteMesure, setLoadingUniteMesure] = useState(true)
   const [unitesMesure, setUnitesMesure] = useState<UniteMesure[]>([])
+  const auth = useAuth()
+  const entreprise_id = auth.session?.user.entreprise_id || 0
+  const [taxesAssujetti, setTaxesAssujetti] = useState<Taxe[]>([])
   useEffect(() => {
+    taxeService.getAllTaxeForEntreprise(entreprise_id).then((data) => {
+      setTaxesAssujetti(data)
+    })
     categorieService
       .getAll()
       .then((data) => {
@@ -237,25 +247,11 @@ const CreateProduct = (): JSX.Element => {
             </div>
           )}
         />
-        <Controller
-          control={form.control}
-          name="taux_tva"
-          render={({ field }) => (
-            <fieldset className="flex max-w-md flex-col gap-4">
-              <legend className="mb-4">
-                <Label>TVA</Label>
-              </legend>
-              <Select {...field}>
-                <option disabled>Selectionner le pourcentage TVA</option>
-                <option value="18">18%</option>
-                <option value="10">10%</option>
-                <option value="0" defaultChecked>
-                  0%
-                </option>
-              </Select>
-            </fieldset>
-          )}
-        />
+        <div>{JSON.stringify(taxesAssujetti)}</div>
+        {taxesAssujetti.map((taxe, index) => (
+          <TaxeInputComponent key={index} taxe={taxe} form={form} isPending={pending} />
+        ))}
+
         {/* {tout_taxe_comprise_prix ? (
                <></>
             ) : (

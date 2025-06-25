@@ -1,5 +1,4 @@
 export {}
-
 declare global {
   interface Window {
     api: {
@@ -16,6 +15,9 @@ declare global {
       entrepriseGetFirst: () => Promise<import('../services/Entreprise').Entreprise | null>
       entrepriseCount: () => Promise<number>
       entrepriseGetAll: () => Promise<import('../services/Entreprise').Entreprise[]>
+      entrepriseGetAllTaxes: (
+        entreprise_id: number
+      ) => Promise<import('../services/Entreprise').TaxeAssujettie[]>
       factureInsert: (
         factureData: import('../services/Facture').FactureData
       ) => Promise<number | null>

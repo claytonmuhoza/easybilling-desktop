@@ -28,3 +28,6 @@ ipcMain.handle('Entreprise:getFirst', async () => {
 ipcMain.handle('Entreprise:getAll', async () => {
   return Entreprise.getAllEntreprises()
 })
+ipcMain.handle('Entreprise:getAllTaxesForEntreprise', async (_event, entreprise_id: number) => {
+  return Entreprise.getTaxesForEntreprise(entreprise_id)
+})

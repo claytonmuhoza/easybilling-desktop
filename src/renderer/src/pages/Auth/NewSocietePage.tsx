@@ -105,8 +105,7 @@ const NewSocietePage = ({
           nom: taxe.nom,
           assujetti: false,
           est_pourcentage: taxe.valeurType === 'POURCENTAGE',
-          valeur_defaut:
-            taxe.valeurType === 'FIXE' && taxe.valeurFixe ? taxe.valeurFixe : undefined,
+          valeur_defaut: taxe.valeurFixe || 0,
           values: taxe.valeurType === 'POURCENTAGE' ? taxe.valeurs || [] : [],
           valeur_custom: false
         })),
@@ -793,7 +792,7 @@ const NewSocietePage = ({
                 </Button>
               </div>
             </form>
-            <div>{JSON.stringify(form.getFieldState('taxes.0.est_pourcentage'))}</div>
+            <div>{JSON.stringify(form.watch().taxes)}</div>
           </div>
         </div>
       </div>

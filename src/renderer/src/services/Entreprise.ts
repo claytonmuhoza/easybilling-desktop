@@ -19,7 +19,7 @@ export interface EntrepriseData {
   identifiant_systeme: string
   mot_de_passe_systeme: string
   // La propriété taxes_assujetti utilise un type défini dans Taxe.ts
-  taxes_assujetti: { taxe: TaxeData; valeur_par_defaut: number; is_pourcentage: boolean }[]
+  taxes_assujetti: { taxe: TaxeData; valeur: number }[]
 }
 
 export interface TaxeData {
@@ -49,7 +49,7 @@ export class Entreprise {
   adresse_numero: string
   identifiant_systeme: string
   mot_de_passe_systeme: string
-  taxes_assujetti: { taxe: TaxeData; valeur_par_defaut: number; is_pourcentage: boolean }[]
+  taxes_assujetti: { taxe: TaxeData; valeur: number }[]
 
   constructor(data: EntrepriseData) {
     this.id = data.id

@@ -25,6 +25,15 @@ export class Taxe implements TaxeData {
     this.valeurFixe = data.valeurFixe ?? null
     this.valeurs = data.valeurs || []
   }
+  displayName(): string {
+    const nameToDisplay =
+      this.nom === 'tva'
+        ? 'TVA'
+        : this.nom === 'pfl'
+          ? 'prélèvement forfaitaire libératoire'
+          : this.nom
+    return nameToDisplay
+  }
 
   isPourcentage(): boolean {
     return this.valeurType === 'POURCENTAGE'
@@ -51,4 +60,8 @@ export class ValeurTaxe implements ValeurTaxeData {
     this.id_taxe = data.id_taxe
     this.valeur = data.valeur
   }
+}
+export type TaxeAssujettie = {
+  taxe: Taxe
+  valeur: number
 }

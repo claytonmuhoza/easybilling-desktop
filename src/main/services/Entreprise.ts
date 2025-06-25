@@ -27,7 +27,7 @@ export class Entreprise {
   mot_de_passe_systeme: string
   taxes_assujetti: TaxeAssujettie[]
 
-  constructor(data: Partial<Entreprise> = {}) {
+  constructor(data: Entreprise) {
     this.id = data.id
     this.nom = data.nom || ''
     this.nif = data.nif || ''
@@ -83,7 +83,9 @@ export class Entreprise {
 
       if (result.changes > 0) {
         const entrepriseId = result.lastInsertRowid as number
-        entreprise.taxes_assujetti.forEach(({ taxe, valeur }) => {
+        entreprise.taxes_assujetti.forEach((taxe_assujetti) => {
+          const taxe = taxe_assujetti.taxe
+          const valeur = taxe_assujetti.valeur
           const taxeDb = Taxe.getByName(taxe.nom)
           if (taxeDb) {
             db.prepare(

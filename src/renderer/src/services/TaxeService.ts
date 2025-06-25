@@ -1,6 +1,30 @@
+import { TaxeAssujettie } from './Taxe'
 import { Taxe, ValeurTaxe } from '@renderer/services/Taxe'
 
 export const taxeService = {
+  getAllTaxeForEntreprise: async (entreprise_id: number): Promise<Taxe[]> => {
+    try {
+      const taxesAssujetti: TaxeAssujettie[] = await window.api.entrepriseGetAllTaxes(entreprise_id)
+      const taxes = await Promise.all(
+        taxesAssujetti.map(async (TaxeAssujettie: TaxeAssujettie) => {
+          const values: number[] = (await window.api.taxesValeurs(TaxeAssujettie.taxe.id || 0)).map(
+            (v) => v.valeur
+          )
+          return new Taxe({
+            id: TaxeAssujettie.taxe.id,
+            nom: TaxeAssujettie.taxe.nom,
+            type: TaxeAssujettie.taxe.type,
+            valeurType: TaxeAssujettie.taxe.valeurType,
+            valeurFixe: TaxeAssujettie.valeur,
+            valeurs: values || []
+          })
+        })
+      )
+      return taxes
+    } catch (error) {
+      throw "Une erreur s'est produit: " + error
+    }
+  },
   /**
    * Récupère la liste de toutes les taxes.
    * @returns Promise résolvant à un tableau de Taxe

@@ -1,14 +1,15 @@
 import { Controller, UseFormReturn } from 'react-hook-form'
 import { Checkbox, Label, Radio, Select, TextInput } from 'flowbite-react'
 import { z } from 'zod'
-import { contribuableConfCreationSchema } from '@renderer/schemas'
+import { ArticleSchema, contribuableConfCreationSchema } from '@renderer/schemas'
+import { Taxe } from '@renderer/services/Taxe'
 
 type TaxeFormType = z.infer<typeof contribuableConfCreationSchema>['taxes'][number]
 
 type Props = {
   index: number
-  form: UseFormReturn<z.infer<typeof contribuableConfCreationSchema>>
-  taxe: TaxeFormType
+  form: UseFormReturn<z.infer<typeof ArticleSchema>>
+  taxe: Taxe
   isPending: boolean
 }
 
