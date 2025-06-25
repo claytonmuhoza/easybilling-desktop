@@ -75,7 +75,7 @@ const CreateProduct = (): JSX.Element => {
     defaultValues: {
       nom: '',
       prix_vente: 0,
-      taux_tva: 18,
+      taxes: [],
       stockable: false,
       //prix_revient: 0,
       //stock_minimal_alert: 0,
@@ -249,7 +249,13 @@ const CreateProduct = (): JSX.Element => {
         />
         <div>{JSON.stringify(taxesAssujetti)}</div>
         {taxesAssujetti.map((taxe, index) => (
-          <TaxeInputComponent key={index} taxe={taxe} form={form} isPending={pending} />
+          <TaxeInputComponent
+            index={index}
+            key={index}
+            taxe={taxe}
+            form={form}
+            isPending={pending}
+          />
         ))}
 
         {/* {tout_taxe_comprise_prix ? (

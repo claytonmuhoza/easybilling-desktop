@@ -7,12 +7,13 @@ import { Taxe } from '@renderer/services/Taxe'
 // type TaxeFormType = z.infer<typeof contribuableConfCreationSchema>['taxes'][number]
 
 type Props = {
+  index: number
   form: UseFormReturn<z.infer<typeof ArticleSchema>>
   taxe: Taxe
   isPending: boolean
 }
 
-export const TaxeInputComponent = ({ form, taxe, isPending }: Props): JSX.Element => {
+export const TaxeInputComponent = ({ index, form, taxe, isPending }: Props): JSX.Element => {
   //   const assujetti = watch(`taxes.${index}.assujetti`)
   //   const estPourcentage = watch(`taxes.${index}.est_pourcentage`)
   //   const valeurCustom = watch(`taxes.${index}.valeur_custom`)
@@ -25,13 +26,13 @@ export const TaxeInputComponent = ({ form, taxe, isPending }: Props): JSX.Elemen
       {taxe.isPourcentage() ? (
         <Controller
           control={form.control}
-          name="taux_tva"
+          name={`taxes.${index}.valeur_defaut`}
           render={({ field }) => (
             <fieldset className="flex max-w-md flex-col gap-4">
               <legend className="mb-4">
                 <Label>{taxe.displayName()}</Label>
               </legend>
-              <Select defaultValue={taxe.valeurFixe || 0} {...field} disabled={isPending}>
+              <Select defaultValue={taxe.valeurFixe || 0} disabled={isPending} {...field}>
                 <option disabled>Selectionner le pourcentage TVA</option>
                 {taxe.valeurs.map((valeur, index) => (
                   <option key={index} value={valeur}>
@@ -45,7 +46,7 @@ export const TaxeInputComponent = ({ form, taxe, isPending }: Props): JSX.Elemen
       ) : (
         <Controller
           control={form.control}
-          name="taux_tva"
+          name={`taxes.${index}.valeur_defaut`}
           render={({ field }) => (
             <fieldset className="flex max-w-md flex-col gap-4">
               <legend className="mb-4">
@@ -53,8 +54,8 @@ export const TaxeInputComponent = ({ form, taxe, isPending }: Props): JSX.Elemen
               </legend>
               <TextInput
                 defaultValue={taxe.valeurFixe || 0}
-                {...field}
                 disabled={isPending}
+                {...field}
               ></TextInput>
             </fieldset>
           )}

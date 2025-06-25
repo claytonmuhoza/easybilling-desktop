@@ -198,7 +198,7 @@ const serviceSchema = z.object({
       })
       .nonnegative('le nombre doit être positif')
   ),
-  taux_tva: z.preprocess((a) => Number(a), z.number().nonnegative()),
+  taux_tva: z.array(taxeSchema),
   categorie_id: z.preprocess(
     (a) => parseInt('' + z.string().parse(a + ''), 10),
     z.number({
@@ -243,7 +243,7 @@ const produitShema = z.object({
       })
       .nonnegative('le nombre doit être positif')
   ),
-  taux_tva: z.preprocess((a) => Number(a), z.number().nonnegative()),
+  taxes: z.array(taxeSchema),
   categorie_id: z.preprocess(
     (a) => parseInt('' + z.string().parse(a + ''), 10),
     z.number({

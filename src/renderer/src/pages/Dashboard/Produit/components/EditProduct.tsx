@@ -231,25 +231,7 @@ const EditProduct = ({ produit }: { produit: Produit }): JSX.Element => {
             </div>
           )}
         />
-        <Controller
-          control={form.control}
-          name="taux_tva"
-          render={({ field }) => (
-            <fieldset className="flex max-w-md flex-col gap-4">
-              <legend className="mb-4">
-                <Label>TVA</Label>
-              </legend>
-              <Select {...field}>
-                <option disabled>Selectionner le pourcentage TVA</option>
-                <option defaultChecked value="18">
-                  18%
-                </option>
-                <option value="10">10%</option>
-                <option value="0">0%</option>
-              </Select>
-            </fieldset>
-          )}
-        />
+
         {/* <div>
                Prix de vente TVAC:{' '}
                {arrondir_fbu(
